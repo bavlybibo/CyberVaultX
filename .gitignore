@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Runtime data / local vault secrets
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+cybervault.lock
+cybervault_runtime.log
+favicons/
+exports/
+evidence/
+case_data/
+.temp/
+
+# CyberVault exports/backups
+*.cvxbackup
+*.vaultbackup
+*.backup
+*.har
+*.html
+*.txt.report
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Build/release output
+build/
+dist/
+release/
+*.spec.bak
+*.log
+
