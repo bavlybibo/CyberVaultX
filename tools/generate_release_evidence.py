@@ -16,8 +16,16 @@ EVIDENCE = ROOT / "evidence"
 BUILD_LOG = EVIDENCE / "build_output.txt"
 
 COMMANDS: tuple[tuple[str, list[str], Path], ...] = (
-    ("pytest full suite", [sys.executable, "-m", "pytest", "-q"], EVIDENCE / "pytest_output.txt"),
-    ("release preflight", [sys.executable, "tools/release_preflight.py"], EVIDENCE / "release_preflight_output.txt"),
+    (
+        "pytest full suite",
+        [sys.executable, "-m", "pytest", "-q"],
+        EVIDENCE / "pytest_output.txt",
+    ),
+    (
+        "release preflight",
+        [sys.executable, "tools/release_preflight.py"],
+        EVIDENCE / "release_preflight_output.txt",
+    ),
 )
 
 
