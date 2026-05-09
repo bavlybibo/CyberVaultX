@@ -1,0 +1,1 @@
+PASS: GUI initialized and core pages/widgets are present.

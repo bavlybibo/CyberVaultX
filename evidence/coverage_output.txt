@@ -1,0 +1,12 @@
+CyberVault X Coverage Evidence
+Generated UTC: 2026-05-09T09:40:00+00:00
+Command: python -m pytest --cov=app --cov-report=term-missing
+Status: MANUAL ENVIRONMENT STEP
+
+pytest-cov is now declared in requirements-dev.txt, but it is not installed in this execution environment.
+To generate the final coverage table on Windows/dev machine:
+
+    python -m pip install -r requirements-dev.txt
+    python -m pytest --cov=app --cov-report=term-missing
+
+Do not claim a coverage percentage until this command is run in the final dev environment.

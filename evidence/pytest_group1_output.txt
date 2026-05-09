@@ -1,0 +1,11 @@
+CyberVault X Evidence Run
+Title: pytest full suite
+Generated UTC: 2026-05-09T09:43:50+00:00
+Command: /opt/pyvenv/bin/python -m pytest -q
+Working directory: <project-root>
+========================================================================
+.......................................................................s [ 61%]
+..............................................                       [100%]
+117 passed, 1 skipped, 4 subtests passed in 4.32s
+
+Exit code: 0

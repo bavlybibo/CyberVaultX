@@ -1,0 +1,11 @@
+CyberVault X Evidence Run
+Title: release evidence generator
+Generated UTC: 2026-05-09T16:48:17+00:00
+Command: /opt/pyvenv/bin/python tools/generate_release_evidence.py
+Working directory: <project-root>
+========================================================================
+[PASS] pytest full suite -> evidence/pytest_output.txt
+[INFO] cleaned generated files before preflight: {'removed_files': 80, 'removed_dirs': 10}
+[PASS] release preflight -> evidence/release_preflight_output.txt
+[MANUAL] ruff lint check -> evidence/ruff_output.txt
+[PASS] release evidence generation completed

@@ -1,0 +1,13 @@
+CyberVault X Evidence Run
+Title: ruff lint check
+Generated UTC: 2026-05-09T16:48:26+00:00
+Command: /opt/pyvenv/bin/python -m ruff check .
+Working directory: <project-root>
+========================================================================
+
+[stderr]
+/opt/pyvenv/bin/python: No module named ruff
+
+Ruff is declared in requirements-dev.txt. Install dev requirements with: python -m pip install -r requirements-dev.txt
+
+Exit code: 1

@@ -1,0 +1,94 @@
+CyberVault X Evidence Run
+Title: release preflight
+Generated UTC: 2026-05-09T16:48:23+00:00
+Command: /opt/pyvenv/bin/python tools/release_preflight.py
+Working directory: <project-root>
+========================================================================
+
+CyberVault X release preflight
+====================================
+[PASS] required file: README.md - README.md
+[PASS] required file: SECURITY.md - SECURITY.md
+[PASS] required file: PRIVACY.md - PRIVACY.md
+[PASS] required file: DISCLAIMER.md - DISCLAIMER.md
+[PASS] required file: LICENSE - LICENSE
+[PASS] required file: DEMO_SCRIPT.md - DEMO_SCRIPT.md
+[PASS] required file: RELEASE_CHECKLIST.md - RELEASE_CHECKLIST.md
+[PASS] required file: docs/ARCHITECTURE.md - docs/ARCHITECTURE.md
+[PASS] required file: docs/SECURITY_MODEL.md - docs/SECURITY_MODEL.md
+[PASS] required file: docs/GRADING_EVIDENCE.md - docs/GRADING_EVIDENCE.md
+[PASS] required file: docs/USAGE.md - docs/USAGE.md
+[PASS] required file: docs/REPORTING.md - docs/REPORTING.md
+[PASS] required file: docs/DEMO_SCRIPT.md - docs/DEMO_SCRIPT.md
+[PASS] required file: docs/Q_AND_A_PREP.md - docs/Q_AND_A_PREP.md
+[PASS] required file: docs/TROUBLESHOOTING.md - docs/TROUBLESHOOTING.md
+[PASS] required file: docs/FINAL_PROJECT_REPORT.md - docs/FINAL_PROJECT_REPORT.md
+[PASS] required file: docs/CyberVaultX_Final_Project_Report.pdf - docs/CyberVaultX_Final_Project_Report.pdf
+[PASS] required file: presentation/CyberVaultX_Presentation.pptx - presentation/CyberVaultX_Presentation.pptx
+[PASS] required file: docs/THREAT_MODEL.md - docs/THREAT_MODEL.md
+[PASS] required file: docs/DEMO_WALKTHROUGH.md - docs/DEMO_WALKTHROUGH.md
+[PASS] required directory: app - app
+[PASS] required directory: app/core - app/core
+[PASS] required directory: app/security - app/security
+[PASS] required directory: app/crypto - app/crypto
+[PASS] required directory: app/storage - app/storage
+[PASS] required directory: app/services - app/services
+[PASS] required directory: app/ai - app/ai
+[PASS] required directory: tests - tests
+[PASS] required directory: docs - docs
+[PASS] required directory: assets - assets
+[PASS] required directory: assets/screenshots - assets/screenshots
+[PASS] required directory: sample_outputs - sample_outputs
+[PASS] required directory: evidence - evidence
+[PASS] runtime requirements include pycryptodome - AES-GCM preferred backend
+[PASS] runtime requirements include cryptography fallback - fallback crypto backend
+[PASS] dev requirements include pytest - test runner available
+[PASS] dev requirements include pytest-cov - coverage plugin declared
+[PASS] dev requirements include ruff - lint runner declared
+[PASS] offline demo breach-subset exists - 1077 SHA1 hash rows
+[PASS] offline demo breach-subset format - 0 malformed rows
+[PASS] no generated cache or stale validation logs in release tree - clean
+[PASS] no obvious hardcoded secrets - clean
+[PASS] no hardcoded developer-local paths - clean
+[PASS] current docs mention v5.7.2 - v5.7.2
+[PASS] current PPT mentions v5.7.2 - presentation deck text checked
+[PASS] current PDF/source mentions v5.7.2 - pdf/source text checked
+[PASS] no stale text in docs/PPT/PDF: v5.6.0 - stale text scan
+[PASS] no stale text in docs/PPT/PDF: 5.6.0 - stale text scan
+[PASS] no stale text in docs/PPT/PDF: Professional Demo Vault - stale text scan
+[PASS] screenshot folder contains standardized PNG set - ai_security_coach.png, backup_preview.png, dashboard.png, proof_center.png, report_package.png, security_center.png, settings.png, test_output.png, vault.png
+[PASS] all screenshot names are referenced consistently - all referenced
+[PASS] screenshots are non-empty image files - ok
+[PASS] evidence file exists: evidence/pytest_output.txt - evidence/pytest_output.txt
+[PASS] evidence file exists: evidence/release_preflight_output.txt - evidence/release_preflight_output.txt
+[PASS] evidence file exists: evidence/build_output.txt - evidence/build_output.txt
+[PASS] sample output exists: sample_outputs/privacy_safe_report.html - sample_outputs/privacy_safe_report.html
+[PASS] sample output exists: sample_outputs/report.json - sample_outputs/report.json
+[PASS] sample output exists: sample_outputs/audit_log.html - sample_outputs/audit_log.html
+[PASS] sample output exists: sample_outputs/manifest.json - sample_outputs/manifest.json
+[PASS] sample output exists: sample_outputs/backup_preview.txt - sample_outputs/backup_preview.txt
+[PASS] sample output exists: sample_outputs/verification_output.txt - sample_outputs/verification_output.txt
+[PASS] no exaggerated wording: End-to-End Encryption - wording scan
+[PASS] no exaggerated wording: end-to-end encryption - wording scan
+[PASS] no exaggerated wording: Professional Demo Vault - wording scan
+[PASS] no exaggerated wording: Report signing - wording scan
+[PASS] no exaggerated wording: Commercial product - wording scan
+[PASS] no exaggerated wording: Breach Detection - wording scan
+[PASS] honest wording present: Local encryption at rest using AES-GCM - wording scan
+[PASS] honest wording present: AI-style Local Security Coach - wording scan
+[PASS] honest wording present: Local audit hash-chain integrity check - wording scan
+[PASS] honest wording present: local manifest integrity signature - wording scan
+[PASS] honest wording present: public Ed25519 manifest signature - wording scan
+[PASS] honest wording present: commercial-style academic prototype - wording scan
+[PASS] honest wording present: offline demo breach-subset - wording scan
+[PASS] external verifier checks public Ed25519 signature - verify_report_package.py
+[PASS] sample manifest includes public signature - sample_outputs/manifest.json
+[PASS] python compile check - compiled in memory without bytecode output
+
+{
+  "total": 77,
+  "passed": 77,
+  "failed": 0
+}
+
+Exit code: 0

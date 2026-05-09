@@ -1,0 +1,204 @@
+
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<title>CyberVault Privacy-Safe Report — Executive Security Report</title>
+<style>
+:root { --bg:#07111f; --panel:#10213a; --card:#152843; --text:#eef4ff; --muted:#9db1d0; --accent:#11c5d9; --ok:#2fd08b; --warn:#ffb84d; --bad:#ff647a; }
+* { box-sizing:border-box; }
+body { margin:0; font-family:Segoe UI,Arial,sans-serif; background:linear-gradient(180deg,#07111f,#0d1728); color:var(--text); padding:32px; }
+.hero { background:linear-gradient(135deg,#132948,#0f1f36); border:1px solid #203758; border-radius:24px; padding:28px; box-shadow:0 20px 40px rgba(0,0,0,.18); }
+.header { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; margin-bottom:18px; }
+.hero h1 { margin:0 0 10px 0; font-size:34px; }
+.metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:20px 0 0 0; }
+.metric,.panel,.finding,.risk-card { background:var(--card); border:1px solid #213a5a; border-radius:18px; padding:16px; }
+.metric-label,.muted,th { color:var(--muted); font-size:13px; }
+.metric-value { margin-top:10px; font-size:28px; font-weight:700; }
+.grid { display:grid; grid-template-columns:1.15fr .85fr; gap:16px; margin:18px 0; }
+.stack { display:grid; gap:16px; }
+.risk-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:14px; }
+.badge { padding:8px 12px; border-radius:999px; font-size:13px; font-weight:700; }
+.risk-low { background:rgba(47,208,139,.15); color:var(--ok); }
+.risk-moderate { background:rgba(17,197,217,.15); color:var(--accent); }
+.risk-high { background:rgba(255,184,77,.15); color:var(--warn); }
+.risk-critical { background:rgba(255,100,122,.15); color:var(--bad); }
+.finding { margin-bottom:14px; }
+.finding-head { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+.finding-head h3 { margin:0; flex:1; }
+.score { color:var(--accent); font-weight:700; }
+.columns { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-top:12px; }
+ul { margin:10px 0 0 18px; padding:0; }
+section h2, h3, h4, p { margin:0; }
+table { width:100%; border-collapse:collapse; margin-top:12px; }
+th,td { text-align:left; padding:10px 12px; border-bottom:1px solid #233a5c; font-size:14px; }
+.small { font-size:12px; }
+.report-footer { margin-top:24px; padding-top:14px; border-top:1px solid #233a5c; color:var(--muted); font-size:12px; }
+@media print {
+  :root { --bg:#ffffff; --panel:#ffffff; --card:#ffffff; --text:#111827; --muted:#4b5563; --accent:#1d4ed8; --ok:#047857; --warn:#b45309; --bad:#b91c1c; }
+  body { background:#fff; color:#111827; padding:16mm; }
+  .hero,.panel,.finding,.metric,.risk-card { box-shadow:none; border:1px solid #cbd5e1; break-inside:avoid; }
+  .grid,.columns,.metrics,.risk-grid { break-inside:avoid; }
+  table { page-break-inside:auto; }
+  tr { page-break-inside:avoid; page-break-after:auto; }
+}
+</style>
+</head>
+<body>
+  <div class='hero'>
+    <div class='header'>
+      <div>
+        <h1>CyberVault Privacy-Safe Report</h1>
+        <p class='muted'>Executive Security Report · Generated 2026-05-09T09:40:39+00:00</p>
+        <p class='muted'>Owner: Redacted Owner · Encryption: AES-GCM Protected · Last backup: Never</p>
+        <p class="muted">Privacy-safe mode is enabled: credential titles and owner details are redacted.</p>
+      </div>
+      <div class='badge risk-critical'>Overall score 20/100</div>
+    </div>
+    <div class='metrics'><div class='metric'><div class='metric-label'>Total</div><div class='metric-value'>2</div></div><div class='metric'><div class='metric-label'>Weak</div><div class='metric-value'>2</div></div><div class='metric'><div class='metric-label'>Breached</div><div class='metric-value'>0</div></div><div class='metric'><div class='metric-label'>Reused Passwords</div><div class='metric-value'>0</div></div><div class='metric'><div class='metric-label'>Old</div><div class='metric-value'>0</div></div><div class='metric'><div class='metric-label'>Duplicate Usernames</div><div class='metric-value'>0</div></div><div class='metric'><div class='metric-label'>Duplicate Sites</div><div class='metric-value'>0</div></div><div class='metric'><div class='metric-label'>Missing Fields</div><div class='metric-value'>0</div></div><div class='metric'><div class='metric-label'>Trashed</div><div class='metric-value'>0</div></div><div class='metric'><div class='metric-label'>Health Score</div><div class='metric-value'>20</div></div></div>
+  </div>
+
+  <section class='panel' style='margin-top:18px;'>
+    <h2>CyberVault Local Security Coach</h2>
+    <p class='muted'>Local Security Coach reviewed 2 active credential(s) and scored the vault at 20/100. The current posture is critical attention required. The top driver is matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category. Average heuristic confidence across priority items is 90%. The plan is generated locally from redacted security signals only; confidence is heuristic policy confidence, not calibrated ML accuracy.</p>
+    <div class='columns'>
+      <div>
+        <h4>Today</h4>
+        <ul><li>credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.</li><li>credential #2: Generate a stronger 20+ character password and update the real service.</li></ul>
+      </div>
+      <div>
+        <h4>This Week</h4>
+        <ul><li>Review moderate findings and clean duplicate or incomplete records.</li></ul>
+      </div>
+      <div>
+        <h4>Long-Term</h4>
+        <ul><li>Run a monthly vault review and export a fresh encrypted backup after major rotations.</li></ul>
+      </div>
+    </div>
+    <p class='muted small' style='margin-top:14px;'>I analyzed the vault locally and found a health score of 20/100 across 2 credential(s). Risk distribution is Critical: 2, High: 0, Moderate: 0, Low: 0. The best first move is: credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA. Fix-impact simulation estimates a move to 38/100 (+18 points) after the top priorities are handled.  No hot posture area dominates right now. What changed: Baseline captured: current vault health is 20/100.. Decision lens: First fix → Today because matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category After that, use the verification questions and remediation playbook so the report shows evidence-bound fixes instead of generic advice.</p>
+    <table>
+      <thead><tr><th>Credential Ref</th><th>Risk</th><th>Signal / Confidence</th><th>Timeline</th><th>Why / Exposure</th><th>Attack Scenario</th><th>Business Impact</th><th>Recommended Action</th></tr></thead>
+      <tbody><tr><td>credential #1</td><td>Critical</td><td>Breach/Common hit<br><span class='muted'>98% heuristic confidence</span></td><td>Today</td><td>matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category<br><span class='muted'>breach reuse → mailbox/session takeover</span></td><td>Credential stuffing path: an attacker tests a known/common password against this account and any reused services.</td><td>Potential workspace compromise, lateral movement, mailbox takeover, or operational disruption.</td><td>Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.<br><span class='muted'>Expected score gain: +34</span></td></tr><tr><td>credential #2</td><td>Critical</td><td>Weak entropy<br><span class='muted'>81% heuristic confidence</span></td><td>Today</td><td>has weak password strength, belongs to a high-value Admin category<br><span class='muted'>weak secret hygiene → account takeover or data exposure</span></td><td>Guessing/cracking path: predictable structure lowers the work factor for online guessing or offline cracking after a service breach.</td><td>Lower direct impact, but it still weakens vault hygiene and executive report quality.</td><td>Generate a stronger 20+ character password and update the real service.<br><span class='muted'>Expected score gain: +22</span></td></tr></tbody>
+    </table>
+    <div class='columns' style='margin-top:16px;'>
+      <div>
+        <h4>Decision Matrix</h4>
+        <ul><li><strong>First fix:</strong> Today — matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category<br><span class='muted'>Next: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.</span></li><li><strong>Heuristic confidence:</strong> 98% — offline breach/common-password signal; score 16/100; site-fit 1/100 for Work / Business App<br><span class='muted'>Next: Use the evidence tags before exporting a report.</span></li><li><strong>Score recovery:</strong> Projected — Current score 20/100 with 2 weak, 0 reused, 0 old.<br><span class='muted'>Next: Fix top queue items, then regenerate Local Security Coach to compare baseline movement.</span></li></ul>
+      </div>
+      <div>
+        <h4>Posture Heatmap</h4>
+        <ul><li><strong>Breach:</strong> Clear (0) — Rotate leaked/common hits first.</li><li><strong>Reuse:</strong> Clear (0) — Break shared passwords across accounts.</li><li><strong>Weakness:</strong> Warm (2) — Increase length and randomness.</li><li><strong>Age:</strong> Clear (0) — Rotate credentials older than policy.</li><li><strong>Metadata:</strong> Clear (0) — Complete site, category, and tags for reporting.</li><li><strong>Site Fit:</strong> Warm (1) — Match password strength to the inferred website/account profile.</li></ul>
+      </div>
+      <div>
+        <h4>Quality Gates</h4>
+        <ul><li><strong>Secret redaction:</strong> PASS — Priority records use credential refs and masked username hints only.</li><li><strong>Actionability:</strong> PASS — 2 ranked remediation item(s) generated from current telemetry.</li><li><strong>LLM payload hygiene:</strong> REVIEW — Optional payload is designed for future models without raw passwords, master keys, notes, paths, or backup blobs.</li><li><strong>Evidence coverage:</strong> PASS — Each priority item includes confidence, primary signal, evidence tags, and a remediation path.</li></ul>
+      </div>
+    </div>
+    <div class='columns' style='margin-top:16px;'>
+      <div>
+        <h4>What Changed</h4>
+        <ul><li>Baseline captured: current vault health is 20/100.</li><li>No previous local coach snapshot is stored yet; export a report after fixes to compare future progress.</li></ul>
+      </div>
+      <div>
+        <h4>Fix Impact Simulation</h4>
+        <p class='muted'>Current: 20/100 · Projected: 38/100 · Gain: 18</p>
+        <ul><li>credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.</li><li>credential #2: Generate a stronger 20+ character password and update the real service.</li></ul>
+      </div>
+      <div>
+        <h4>Privacy Model</h4>
+        <p class='muted'>Local Security Coach uses redacted local telemetry only. Raw passwords, notes, master keys, and cloud AI requests are excluded. Confidence is heuristic policy confidence, not calibrated ML accuracy.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class='grid'>
+    <section class='panel'>
+      <h2>Risk Distribution</h2>
+      <p class='muted'>This shows how many credentials currently land in each risk bucket.</p>
+      <div class='risk-grid'><div class='risk-card risk-critical'><div class='metric-label'>Critical</div><div class='metric-value'>2</div></div><div class='risk-card risk-high'><div class='metric-label'>High</div><div class='metric-value'>0</div></div><div class='risk-card risk-moderate'><div class='metric-label'>Moderate</div><div class='metric-value'>0</div></div><div class='risk-card risk-low'><div class='metric-label'>Low</div><div class='metric-value'>0</div></div></div>
+    </section>
+    <div class='stack'>
+      <section class='panel'>
+        <h2>Recommendations</h2>
+        <ul><li>Replace 2 weak password(s) with 16+ character generated passwords.</li></ul>
+      </section>
+      <section class='panel'>
+        <h2>Healthy Signals</h2>
+        <ul><li>No passwords matched the local offline breach dataset.</li><li>No password reuse was detected across stored credentials.</li><li>No credentials are past the 90-day rotation window.</li><li>Metadata is complete across the active vault entries.</li></ul>
+      </section>
+    </div>
+  </div>
+
+  <div class='grid'>
+    <section class='panel'>
+      <h2>Score Drivers</h2>
+      <p class='muted'>How the weighted health score is being reduced across the current vault state.</p>
+      <table>
+        <thead>
+          <tr><th>Driver</th><th>Count</th><th>Penalty Each</th><th>Total Penalty</th><th>Impact / Account</th></tr>
+        </thead>
+        <tbody><tr><td>Weak passwords</td><td>2</td><td>10</td><td>20</td><td>10.0</td></tr></tbody>
+      </table>
+    </section>
+    <section class='panel'>
+      <h2>Top Priority Items</h2>
+      <ul><li><strong>Credential #1</strong> — Critical (16/100)</li><li><strong>Credential #2</strong> — Critical (23/100)</li></ul>
+      <p class='muted small' style='margin-top:14px;'>Use this section during the walkthrough to explain what should be fixed first and why the score improves after each remediation step.</p>
+    </section>
+  </div>
+
+  <section>
+    <h2>Detailed Findings</h2>
+    <p class='muted small'>0 healthy credential(s) were excluded from detailed findings to keep the report focused on real issues.</p>
+    
+            <div class='finding'>
+              <div class='finding-head'>
+                <h3>Credential #1</h3>
+                <span class='badge risk-critical'>Critical</span>
+                <span class='score'>16/100</span>
+              </div>
+              <p class='muted'> · Work</p>
+              <div class='columns'>
+                <div>
+                  <h4>Issues</h4>
+                  <ul><li>Ends with a year-like suffix.</li><li>Season/month word detected; these are common password bases.</li><li>Dictionary token(s) detected: summer.</li><li>Dictionary word with predictable numeric/symbol suffix detected.</li><li>Effective entropy is low after removing predictable pattern value.</li><li>Below inferred site-policy fit: Work / Business App (1/100).</li></ul>
+                </div>
+                <div>
+                  <h4>Why This Matters</h4>
+                  <ul><li>Attackers prioritize leaked and common passwords during credential stuffing and password spraying.</li><li>Weak entropy and predictable patterns reduce the effort required to guess the password.</li></ul>
+                </div>
+                <div>
+                  <h4>Fix Recommendations</h4>
+                  <ul><li>Rotate this password immediately.</li><li>Generate a 16+ character password with uppercase, lowercase, digits, and symbols.</li></ul>
+                </div>
+              </div>
+            </div>
+            
+            <div class='finding'>
+              <div class='finding-head'>
+                <h3>Credential #2</h3>
+                <span class='badge risk-critical'>Critical</span>
+                <span class='score'>23/100</span>
+              </div>
+              <p class='muted'> · Admin</p>
+              <div class='columns'>
+                <div>
+                  <h4>Issues</h4>
+                  <ul><li>Short alphabetic or numeric sequence detected.</li><li>Dictionary token(s) detected: admin, portal.</li><li>Dictionary word with predictable numeric/symbol suffix detected.</li><li>Passphrase model: 3 word(s), conservative wordlist estimate 27.0 bits. This is a heuristic; strength depends on whether the words were randomly generated.</li><li>Password appears related to account/site context.</li></ul>
+                </div>
+                <div>
+                  <h4>Why This Matters</h4>
+                  <ul><li>Weak entropy and predictable patterns reduce the effort required to guess the password.</li></ul>
+                </div>
+                <div>
+                  <h4>Fix Recommendations</h4>
+                  <ul><li>Generate a 16+ character password with uppercase, lowercase, digits, and symbols.</li></ul>
+                </div>
+              </div>
+            </div>
+            
+  </section>
+  <div class='report-footer'>Payload SHA-256: 4e7aa6593f974a668294b839a282f7d39c087491ab00ef96f27324319f82643b · Report SHA-256 label retired because this digest is payload-only · Final file hashes are recorded in report-package manifests · Privacy level: minimal · Generated locally by CyberVault X.</div>
+</body>
+</html>
+        

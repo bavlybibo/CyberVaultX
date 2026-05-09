@@ -1218,6 +1218,7 @@ class PagesMixin:
             txt = tk.Text(ri, height=h, wrap='word', bg=PANEL_DEEP, fg=TEXT, insertbackground=TEXT, relief='flat', bd=0, padx=10, pady=10)
             txt.pack(fill='x', pady=(8, 0))
             self._style_text_widget(txt)
+            self._attach_text_scrollbar(txt)
             txt.configure(state='disabled')
             setattr(self, attr, txt)
 
@@ -1299,10 +1300,10 @@ class PagesMixin:
         score = int(metrics.get('health_score', 0) or 0) if total else 0
         if hasattr(self, 'ai_posture_canvas'):
             c=self.ai_posture_canvas; c.delete('all')
-            w,h=max(c.winfo_width(),420),max(c.winfo_height(),150)
+            w,h=max(c.winfo_width(),420),max(c.winfo_height(),128)
             c.create_rectangle(0,0,w,h,fill=CARD_BG,outline=CARD_BG)
-            c.create_text(18,22,text='CYBERVAULT SECURITY POSTURE',anchor='w',fill=TEXT,font=('Segoe UI Semibold',11))
-            cx,cy,r=82,78,45
+            c.create_text(18,20,text='CYBERVAULT SECURITY POSTURE',anchor='w',fill=TEXT,font=('Segoe UI Semibold',11))
+            cx,cy,r=76,72,38
             c.create_oval(cx-r,cy-r,cx+r,cy+r,outline=PANEL_DEEP,width=12)
             if total:
                 extent=360*score/100
@@ -1311,23 +1312,23 @@ class PagesMixin:
                 c.create_text(cx,cy+18,text='/100',fill=MUTED,font=('Segoe UI',8))
             else:
                 c.create_text(cx,cy,text='—',fill=TEXT,font=('Segoe UI Semibold',24))
-            c.create_text(150,62,text=f'{total} account(s) scanned',anchor='w',fill=SUBTEXT,font=('Segoe UI',10))
-            c.create_text(150,86,text='Local deterministic plan · privacy-first',anchor='w',fill=SUCCESS,font=('Segoe UI Semibold',9))
+            c.create_text(136,58,text=f'{total} account(s) scanned',anchor='w',fill=SUBTEXT,font=('Segoe UI',10))
+            c.create_text(136,82,text='Local deterministic plan · privacy-first',anchor='w',fill=SUCCESS,font=('Segoe UI Semibold',9))
         if hasattr(self, 'ai_severity_canvas'):
             c=self.ai_severity_canvas; c.delete('all')
-            w,h=max(c.winfo_width(),320),max(c.winfo_height(),280)
+            w,h=max(c.winfo_width(),320),max(c.winfo_height(),238)
             c.create_rectangle(0,0,w,h,fill=CARD_BG,outline=CARD_BG)
-            c.create_text(18,22,text='SEVERITY DISTRIBUTION',anchor='w',fill=TEXT,font=('Segoe UI Semibold',12))
+            c.create_text(18,20,text='SEVERITY DISTRIBUTION',anchor='w',fill=TEXT,font=('Segoe UI Semibold',12))
             cards=plan.get('risk_cards',{}) or {}
             vals={level:int((cards.get(level,{}) or {}).get('count',0) or 0) for level in ('Critical','High','Moderate','Low')}
             colors={'Critical':DANGER,'High':WARNING,'Moderate':'#EAB308','Low':SUCCESS}
-            cx,cy=w//2,112
+            cx,cy=w//2,92
             for idx,level in enumerate(('Critical','High','Moderate','Low')):
-                r=28+idx*16
+                r=24+idx*14
                 c.create_oval(cx-r,cy-r,cx+r,cy+r,outline=colors[level],width=2)
             c.create_text(cx,cy,text='◆',fill=WARNING,font=('Segoe UI Semibold',20))
             for idx,level in enumerate(('Critical','High','Moderate','Low')):
-                y=188+idx*21
+                y=164+idx*18
                 c.create_oval(22,y,31,y+9,fill=colors[level],outline='')
                 c.create_text(40,y+5,text=f'{level}: {vals[level]}',anchor='w',fill=SUBTEXT,font=('Segoe UI',9))
 
@@ -1361,36 +1362,36 @@ class PagesMixin:
         root = self.ai_guardian_tab
         root.configure(bg=APP_BG)
 
-        hero = self._glow_card(root, bg=PANEL_DEEP, accent='#A855F7', padx=18, pady=16)
+        hero = self._glow_card(root, bg=PANEL_DEEP, accent='#A855F7', padx=16, pady=12)
         hero.pack(fill='x', pady=(0, 14))
         hi = hero.inner
         left = tk.Frame(hi, bg=hi.cget('bg'))
         left.pack(side='left', fill='x', expand=True)
         title_row = tk.Frame(left, bg=left.cget('bg'))
         title_row.pack(fill='x')
-        self._label(title_row, 'Local Security Coach — Decision Theater', bg=title_row.cget('bg'), font=('Segoe UI Semibold', 18)).pack(side='left')
+        self._label(title_row, 'Local Security Coach — Decision Theater', bg=title_row.cget('bg'), font=('Segoe UI Semibold', 16)).pack(side='left')
         tk.Label(title_row, text='PRIVATE BY DESIGN', bg='#281B52', fg='#C4B5FD', padx=10, pady=4, font=('Segoe UI Semibold', 8), highlightthickness=1, highlightbackground='#7C3AED').pack(side='left', padx=(12, 0))
         tk.Label(title_row, text='DETERMINISTIC', bg='#14213D', fg='#93C5FD', padx=10, pady=4, font=('Segoe UI Semibold', 8), highlightthickness=1, highlightbackground='#2563EB').pack(side='left', padx=(8, 0))
-        self._label(left, 'Evidence-bound local reasoning from vault telemetry: severity, confidence, risk collisions, attack path, verification questions, and remediation playbook. No data ever leaves your device.', fg=SUBTEXT, bg=left.cget('bg'), font=('Segoe UI', 10), wraplength=820).pack(anchor='w', pady=(5, 0))
+        self._label(left, 'Evidence-bound local reasoning from vault telemetry: severity, confidence, risk collisions, attack path, verification questions, and remediation playbook. No data ever leaves your device.', fg=SUBTEXT, bg=left.cget('bg'), font=('Segoe UI', 9), wraplength=780).pack(anchor='w', pady=(4, 0))
         actions = tk.Frame(hi, bg=hi.cget('bg'))
         actions.pack(side='right', anchor='ne')
-        self._top_action_button(actions, 'Generate Smart Security Plan', self.generate_ai_security_plan, kind='accent').grid(row=0, column=0, columnspan=2, sticky='ew')
-        self._top_action_button(actions, 'Export AI Summary', self.export_ai_summary).grid(row=1, column=0, sticky='ew', pady=(8, 0), padx=(0, 6))
-        self._top_action_button(actions, 'Report Package', self.export_report_package).grid(row=1, column=1, sticky='ew', pady=(8, 0))
+        self._top_action_button(actions, 'Generate Plan', self.generate_ai_security_plan, kind='accent').grid(row=0, column=0, columnspan=2, sticky='ew')
+        self._top_action_button(actions, 'Export Summary', self.export_ai_summary).grid(row=1, column=0, sticky='ew', pady=(6, 0), padx=(0, 6))
+        self._top_action_button(actions, 'Report Package', self.export_report_package).grid(row=1, column=1, sticky='ew', pady=(6, 0))
         actions.grid_columnconfigure(0, weight=1)
         actions.grid_columnconfigure(1, weight=1)
 
         top = tk.Frame(root, bg=APP_BG)
         top.pack(fill='x', pady=(0, 14))
-        posture = self._glow_card(top, bg=CARD_BG, accent=self.accent, padx=0, pady=0, height=154)
+        posture = self._glow_card(top, bg=CARD_BG, accent=self.accent, padx=0, pady=0, height=136)
         posture.pack(side='left', fill='x', expand=True, padx=(0, 12))
-        self.ai_posture_canvas = tk.Canvas(posture.inner, height=150, bg=CARD_BG, highlightthickness=0)
+        self.ai_posture_canvas = tk.Canvas(posture.inner, height=132, bg=CARD_BG, highlightthickness=0)
         self.ai_posture_canvas.pack(fill='both', expand=True)
-        privacy = self._glow_card(top, bg=CARD_BG, accent=SUCCESS, padx=16, pady=16, height=154)
+        privacy = self._glow_card(top, bg=CARD_BG, accent=SUCCESS, padx=14, pady=12, height=136)
         privacy.pack(side='left', fill='x', expand=True, padx=(0, 12))
         self._label(privacy.inner, '100% PRIVATE. 100% LOCAL.', fg=self.accent, bg=privacy.inner.cget('bg'), font=('Segoe UI Semibold', 11)).pack(anchor='w')
         self._label(privacy.inner, '• All analysis runs on your device\n• No telemetry leaves your machine\n• Deterministic local reasoning\n• No raw secrets in summaries', fg=SUBTEXT, bg=privacy.inner.cget('bg'), font=('Segoe UI', 9), wraplength=430).pack(anchor='w', pady=(8, 0))
-        mode = self._glow_card(top, bg=CARD_BG, accent='#A855F7', padx=16, pady=16, height=154)
+        mode = self._glow_card(top, bg=CARD_BG, accent='#A855F7', padx=14, pady=12, height=136)
         mode.pack(side='left', fill='x', expand=True)
         self._label(mode.inner, 'COACH MODE', bg=mode.inner.cget('bg'), font=('Segoe UI Semibold', 11)).pack(anchor='w')
         self._label(mode.inner, 'Deterministic Local Coach\n✓ Site Policy Reasoner\n✓ Risk Fusion Engine\n✓ Live Coach UX/UI', fg=SUBTEXT, bg=mode.inner.cget('bg'), font=('Segoe UI', 9), wraplength=330).pack(anchor='w', pady=(8, 0))
@@ -1402,7 +1403,7 @@ class PagesMixin:
             ('Evidence Guardrails', self.ai_guardrail_var, SUCCESS),
             ('Top Signal', self.ai_top_signal_var, WARNING),
         ]):
-            panel = self._glow_card(fusion_row, bg=CARD_BG_2 if idx == 0 else CARD_BG, accent=color, padx=14, pady=12, height=92)
+            panel = self._glow_card(fusion_row, bg=CARD_BG_2 if idx == 0 else CARD_BG, accent=color, padx=12, pady=10, height=98)
             panel.pack(side='left', fill='both', expand=True, padx=(0 if idx == 0 else 10, 0))
             self._label(panel.inner, title.upper(), fg=color, bg=panel.inner.cget('bg'), font=('Segoe UI Semibold', 9)).pack(anchor='w')
             self._label(panel.inner, textvariable=variable, fg=SUBTEXT, bg=panel.inner.cget('bg'), font=('Segoe UI', 9), wraplength=390).pack(anchor='w', pady=(7, 0))
@@ -1418,7 +1419,7 @@ class PagesMixin:
             ('Next Checkpoint', self.ai_checkpoint_var, WARNING, 'what to do after the top fix'),
         ]
         for idx, (title, variable, color, hint) in enumerate(intelligence_cards):
-            panel = self._glow_card(intelligence_row, bg=CARD_BG, accent=color, padx=14, pady=12, height=104)
+            panel = self._glow_card(intelligence_row, bg=CARD_BG, accent=color, padx=12, pady=10, height=128)
             panel.grid(row=0, column=idx, sticky='nsew', padx=(0 if idx == 0 else 10, 0))
             self._label(panel.inner, title.upper(), fg=color, bg=panel.inner.cget('bg'), font=('Segoe UI Semibold', 9)).pack(anchor='w')
             self._label(panel.inner, hint, fg=MUTED, bg=panel.inner.cget('bg'), font=('Segoe UI', 8)).pack(anchor='w', pady=(2, 0))
@@ -1429,46 +1430,47 @@ class PagesMixin:
         self.ai_risk_vars = {}
         self.ai_risk_story_vars = {}
         for idx, (level, color, tint) in enumerate([('Critical', DANGER, '#2A1420'), ('High', WARNING, '#2A1E13'), ('Moderate', '#EAB308', '#202512'), ('Low', SUCCESS, '#11271E')]):
-            card = self._glow_card(risk_row, bg=tint, accent=color, padx=16, pady=14, height=116)
+            card = self._glow_card(risk_row, bg=tint, accent=color, padx=14, pady=10, height=126)
             card.pack(side='left', fill='both', expand=True, padx=(0 if idx == 0 else 10, 0))
             count_var = tk.StringVar(value='0')
             story_var = tk.StringVar(value='Waiting for plan generation.')
             self.ai_risk_vars[level] = count_var
             self.ai_risk_story_vars[level] = story_var
             self._label(card.inner, level.upper(), fg=color, bg=card.inner.cget('bg'), font=('Segoe UI Semibold', 9)).pack(anchor='w')
-            self._label(card.inner, textvariable=count_var, bg=card.inner.cget('bg'), font=('Segoe UI Semibold', 26)).pack(anchor='w', pady=(4, 0))
-            self._label(card.inner, textvariable=story_var, fg=SUBTEXT, bg=card.inner.cget('bg'), font=('Segoe UI', 8), wraplength=260).pack(anchor='w')
+            self._label(card.inner, textvariable=count_var, bg=card.inner.cget('bg'), font=('Segoe UI Semibold', 22)).pack(anchor='w', pady=(2, 0))
+            self._label(card.inner, textvariable=story_var, fg=SUBTEXT, bg=card.inner.cget('bg'), font=('Segoe UI', 8), wraplength=300).pack(anchor='w', pady=(2, 0))
 
         middle = tk.Frame(root, bg=APP_BG)
         middle.pack(fill='x', pady=(0, 14))
         middle.grid_columnconfigure(0, weight=4)
         middle.grid_columnconfigure(1, weight=3)
         middle.grid_columnconfigure(2, weight=5)
-        snapshot = self._glow_card(middle, bg=CARD_BG, accent='#A855F7', padx=16, pady=16, height=288)
+        snapshot = self._glow_card(middle, bg=CARD_BG, accent='#A855F7', padx=14, pady=12, height=248)
         snapshot.grid(row=0, column=0, sticky='nsew', padx=(0, 12))
         self._label(snapshot.inner, 'AI PLAN SNAPSHOT', bg=snapshot.inner.cget('bg'), font=('Segoe UI Semibold', 13)).pack(anchor='w')
-        art = tk.Canvas(snapshot.inner, height=112, bg=snapshot.inner.cget('bg'), highlightthickness=0)
+        art = tk.Canvas(snapshot.inner, height=84, bg=snapshot.inner.cget('bg'), highlightthickness=0)
         art.pack(fill='x', pady=(10, 0))
-        cx, cy = 120, 58
-        for r, color in [(50, '#2E1065'), (34, '#7C3AED'), (18, self.accent)]:
+        cx, cy = 96, 43
+        for r, color in [(36, '#2E1065'), (25, '#7C3AED'), (14, self.accent)]:
             art.create_oval(cx-r, cy-r, cx+r, cy+r, outline=color, width=2)
         art.create_text(cx, cy, text='LC', fill='#C4B5FD', font=('Segoe UI Semibold', 18))
         self._label(snapshot.inner, textvariable=self.ai_coach_overview_var, fg=SUBTEXT, bg=snapshot.inner.cget('bg'), font=('Segoe UI', 9), wraplength=440).pack(anchor='w', pady=(8, 0))
         self._label(snapshot.inner, textvariable=self.ai_generated_var, fg=MUTED, bg=snapshot.inner.cget('bg'), font=('Segoe UI', 8)).pack(anchor='w', pady=(8, 0))
         ttk.Button(snapshot.inner, text='Regenerate Plan', command=self.generate_ai_security_plan, style='Pill.TButton').pack(anchor='e', pady=(10, 0))
 
-        severity = self._glow_card(middle, bg=CARD_BG, accent=WARNING, padx=0, pady=0, height=288)
+        severity = self._glow_card(middle, bg=CARD_BG, accent=WARNING, padx=0, pady=0, height=248)
         severity.grid(row=0, column=1, sticky='nsew', padx=(0, 12))
-        self.ai_severity_canvas = tk.Canvas(severity.inner, height=284, bg=CARD_BG, highlightthickness=0)
+        self.ai_severity_canvas = tk.Canvas(severity.inner, height=244, bg=CARD_BG, highlightthickness=0)
         self.ai_severity_canvas.pack(fill='both', expand=True)
 
-        plan_card = self._glow_card(middle, bg=CARD_BG, accent=self.accent, padx=16, pady=16, height=288)
+        plan_card = self._glow_card(middle, bg=CARD_BG, accent=self.accent, padx=14, pady=12, height=248)
         plan_card.grid(row=0, column=2, sticky='nsew')
         self._label(plan_card.inner, 'SMART ACTION PLAN + WORKFLOW', bg=plan_card.inner.cget('bg'), font=('Segoe UI Semibold', 13)).pack(anchor='w')
         self._label(plan_card.inner, 'Do-now, verify, aftercare, signal graph, and honesty limits.', fg=MUTED, bg=plan_card.inner.cget('bg'), font=('Segoe UI', 9)).pack(anchor='w', pady=(4, 8))
-        self.ai_action_text = tk.Text(plan_card.inner, height=10, wrap='word', bg=PANEL_DEEP, fg=TEXT, insertbackground=TEXT, relief='flat', bd=0, padx=10, pady=10)
+        self.ai_action_text = tk.Text(plan_card.inner, height=7, wrap='word', bg=PANEL_DEEP, fg=TEXT, insertbackground=TEXT, relief='flat', bd=0, padx=10, pady=10)
         self.ai_action_text.pack(fill='both', expand=True)
         self._style_text_widget(self.ai_action_text)
+        self._attach_text_scrollbar(self.ai_action_text)
         self.ai_action_text.configure(state='disabled')
 
         lower = tk.Frame(root, bg=APP_BG)
@@ -1481,7 +1483,7 @@ class PagesMixin:
         self._label(li, 'PRIORITY QUEUE', bg=li.cget('bg'), font=('Segoe UI Semibold', 13)).pack(anchor='w')
         self._label(li, 'Risk-ranked action items generated by the Local Security Coach.', fg=MUTED, bg=li.cget('bg'), font=('Segoe UI', 9), wraplength=800).pack(anchor='w', pady=(4, 10))
         cols = ('ref', 'risk', 'signal', 'confidence', 'timeline', 'why', 'action')
-        self.ai_priority_tree = ttk.Treeview(li, columns=cols, show='headings', selectmode='browse', height=10)
+        self.ai_priority_tree = ttk.Treeview(li, columns=cols, show='headings', selectmode='browse', height=7)
         for c, label, width in [('ref', 'Credential Ref', 170), ('risk', 'Risk', 80), ('signal', 'Signal', 130), ('confidence', 'Conf.', 75), ('timeline', 'Timeline', 105), ('why', 'Why First', 250), ('action', 'Action', 230)]:
             self.ai_priority_tree.heading(c, text=label)
             self.ai_priority_tree.column(c, width=width, anchor='w', stretch=True)
@@ -1502,15 +1504,17 @@ class PagesMixin:
         ri = explain.inner
         self._label(ri, 'EVIDENCE-BOUND EXPLANATION', bg=ri.cget('bg'), font=('Segoe UI Semibold', 13)).pack(anchor='w')
         self._label(ri, 'Why these actions and why now.', fg=MUTED, bg=ri.cget('bg'), font=('Segoe UI', 9)).pack(anchor='w', pady=(4, 8))
-        self.ai_explanation_text = tk.Text(ri, height=6, wrap='word', bg=PANEL_DEEP, fg=TEXT, insertbackground=TEXT, relief='flat', bd=0, padx=10, pady=10)
+        self.ai_explanation_text = tk.Text(ri, height=4, wrap='word', bg=PANEL_DEEP, fg=TEXT, insertbackground=TEXT, relief='flat', bd=0, padx=10, pady=10)
         self.ai_explanation_text.pack(fill='x', pady=(0, 10))
         self._style_text_widget(self.ai_explanation_text)
+        self._attach_text_scrollbar(self.ai_explanation_text)
         self.ai_explanation_text.configure(state='disabled')
-        for title, attr, h in [('Decision Matrix', 'ai_decision_text', 5), ('Quality Gates', 'ai_quality_text', 4), ('Optional LLM Blueprint', 'ai_llm_payload_text', 5)]:
+        for title, attr, h in [('Decision Matrix', 'ai_decision_text', 4), ('Quality Gates', 'ai_quality_text', 3), ('Optional LLM Blueprint', 'ai_llm_payload_text', 4)]:
             self._label(ri, title, bg=ri.cget('bg'), font=('Segoe UI Semibold', 11)).pack(anchor='w', pady=(8, 0))
             txt = tk.Text(ri, height=h, wrap='word', bg=PANEL_DEEP, fg=TEXT, insertbackground=TEXT, relief='flat', bd=0, padx=10, pady=10)
             txt.pack(fill='x', pady=(6, 0))
             self._style_text_widget(txt)
+            self._attach_text_scrollbar(txt)
             txt.configure(state='disabled')
             setattr(self, attr, txt)
         sim = self._card(ri, bg=CARD_BG_2, padx=12, pady=12)

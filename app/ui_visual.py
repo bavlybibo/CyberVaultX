@@ -415,24 +415,62 @@ class VisualMixin:
             pass
 
     def _attach_tree_scrollbars(self, tree: ttk.Treeview) -> None:
-        """Attach a dark slim scrollbar and route wheel events correctly.
+        """Attach slim dark scrollbars only when a table really needs them.
 
-        The previous implementation placed a classic tk scrollbar on top of the
-        tree.  On some Windows/Tk themes it stayed bright white and made long
-        pages look broken.  ttk + clam styling is much cleaner and supports
-        normal mouse-wheel scrolling inside tables.
+        V11 always overlaid a horizontal bar.  On Windows that bar can render as
+        a bright native strip, which looked broken in wide empty tables.  V12
+        auto-hides horizontal and vertical bars when the content fits, while
+        still exposing them for dense AI/Proof evidence tables.
         """
         try:
             parent = tree.master
             vsb = ttk.Scrollbar(parent, orient='vertical', command=tree.yview, style='Vertical.TScrollbar')
             hsb = ttk.Scrollbar(parent, orient='horizontal', command=tree.xview, style='Horizontal.TScrollbar')
             tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
-            # Overlay slim scrollbars inside the table bounds.  This avoids the
-            # old white/native bars and keeps later button rows from being pushed
-            # out of place.  Horizontal scrolling matters for AI/Proof tables
-            # whose evidence columns are intentionally wide.
-            vsb.place(in_=tree, relx=1.0, rely=0, relheight=1.0, anchor='ne')
-            hsb.place(in_=tree, relx=0, rely=1.0, relwidth=1.0, anchor='sw')
+
+            sync_pending = {'id': None}
+
+            def _content_width() -> int:
+                try:
+                    total = 0
+                    show = str(tree.cget('show'))
+                    if '#0' in show or show in {'tree', 'tree headings'}:
+                        total += int(tree.column('#0', 'width') or 0)
+                    for col in tree.cget('columns') or ():
+                        total += int(tree.column(col, 'width') or 0)
+                    return total
+                except Exception:
+                    return 0
+
+            def _sync_bars(_event=None) -> None:
+                try:
+                    if sync_pending['id'] is not None:
+                        return
+
+                    def _apply() -> None:
+                        sync_pending['id'] = None
+                        try:
+                            width = max(1, tree.winfo_width())
+                            content_width = _content_width()
+                            if content_width > width + 10:
+                                hsb.place(in_=tree, relx=0, rely=1.0, relwidth=1.0, anchor='sw')
+                            else:
+                                hsb.place_forget()
+                                tree.xview_moveto(0)
+
+                            rowheight = int(self.style.lookup('Treeview', 'rowheight') or 36)
+                            visible_rows = max(1, int((tree.winfo_height() - rowheight) / max(rowheight, 1)))
+                            if len(tree.get_children('')) > visible_rows:
+                                vsb.place(in_=tree, relx=1.0, rely=0, relheight=1.0, anchor='ne')
+                            else:
+                                vsb.place_forget()
+                                tree.yview_moveto(0)
+                        except Exception:
+                            pass
+
+                    sync_pending['id'] = tree.after_idle(_apply)
+                except Exception:
+                    pass
 
             def _wheel(event, target=tree):
                 try:
@@ -442,13 +480,34 @@ class VisualMixin:
                         target.yview_scroll(3, 'units')
                     else:
                         target.yview_scroll(int(-1 * (event.delta / 120)) * 3, 'units')
+                    _sync_bars()
                     return 'break'
                 except Exception:
                     return None
 
+            tree.bind('<Configure>', _sync_bars, add='+')
+            tree.bind('<<TreeviewSelect>>', _sync_bars, add='+')
+            tree.bind('<Map>', _sync_bars, add='+')
             tree.bind('<MouseWheel>', _wheel, add='+')
             tree.bind('<Button-4>', _wheel, add='+')
             tree.bind('<Button-5>', _wheel, add='+')
+            tree.after_idle(_sync_bars)
+            tree.after(500, _sync_bars)
+        except Exception:
+            pass
+
+    def _attach_text_scrollbar(self, text: tk.Text) -> None:
+        """Give dense read-only text panels an integrated dark scrollbar.
+
+        This prevents AI explanation/action-plan content from feeling cut off
+        inside fixed-height panels and keeps page scrolling available when the
+        text block itself reaches its edge.
+        """
+        try:
+            parent = text.master
+            vsb = ttk.Scrollbar(parent, orient='vertical', command=text.yview, style='Vertical.TScrollbar')
+            text.configure(yscrollcommand=vsb.set)
+            vsb.place(in_=text, relx=1.0, rely=0, relheight=1.0, anchor='ne')
         except Exception:
             pass
 

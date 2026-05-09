@@ -21,7 +21,6 @@ cybervault.lock
 cybervault_runtime.log
 favicons/
 exports/
-evidence/
 case_data/
 .temp/
 
@@ -45,3 +44,10 @@ release/
 *.spec.bak
 *.log
 
+# Required release evidence/sample artifacts
+!evidence/
+!evidence/*.txt
+!evidence/*.md
+!sample_outputs/*.html
+!sample_outputs/*.json
+!sample_outputs/*.txt
