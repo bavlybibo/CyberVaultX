@@ -1,0 +1,32 @@
+{
+  "files": [
+    {
+      "name": "executive_report.html",
+      "sha256": "26886a8f1e1d5fe157451505c8f796b2d275ea41e2ca7bad66a4022caeaf1612",
+      "size_bytes": 16891
+    },
+    {
+      "name": "audit_log.html",
+      "sha256": "568fd1082ac428afc6d356979f653764b0fb1c0dad4544dea885e853fca288ec",
+      "size_bytes": 2092
+    },
+    {
+      "name": "ai_guardian_summary.txt",
+      "sha256": "751e21250be926061cb08f566fe1bfbe2ff1a41af9231c3ff42519d6e2cb2109",
+      "size_bytes": 10702
+    }
+  ],
+  "format_version": "CyberVaultReportPackage/v3-signed",
+  "generated_at": "2026-05-09T09:40:39+00:00",
+  "manifest_signature": "3f148b323f18f50463ff6f6af0d14dad2e363eda3c7ee7d9b890905ce08ea900",
+  "package": "CyberVault X Report Package",
+  "package_hash": "aab718535df6ee5452457c5db1c479935400b76cbe22971a881b16126a9f3c13",
+  "privacy_level": "minimal",
+  "privacy_model": "privacy-safe exports only; owner/vault identity and full credential identifiers are redacted",
+  "public_manifest_signature": "OimmiM8iFYuTisA34B5eaeW1otxxRkvuj8rciNvtEghOj4Xcd8TRJILJeMZlXUZrSzeKDYncyeyVEy8E2QcjAQ==",
+  "public_signature_algorithm": "Ed25519/public-manifest-signature-v1",
+  "signature_algorithm": "HMAC-SHA256/local-integrity-proof",
+  "signing_key_fingerprint": "4aa20d24c46daaa5",
+  "signing_public_key_b64": "KDSQKJMdHgoa147PnnPZ+18M+9W6dXRXiJezeug9jw8=",
+  "signing_public_key_fingerprint": "a3765497db8d2c33"
+}

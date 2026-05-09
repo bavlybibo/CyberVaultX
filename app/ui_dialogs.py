@@ -129,83 +129,183 @@ class DialogsMixin:
         self.pending_history_payload = None
 
     def _style_auth_window(self, window: tk.Toplevel, title: str) -> None:
-        window.title(title)
-        window.geometry('780x640')
-        window.minsize(680, 540)
+        window.title(f'CyberVaultX — {title}')
+        width, height = (1120, 720) if 'Create' in title else (1040, 680)
+        window.geometry(f'{width}x{height}')
+        window.minsize(900, 620)
         window.resizable(True, True)
         window.configure(bg=APP_BG)
         window.grab_set()
-        self._center_window(window, 780, 640)
+        self._center_window(window, width, height)
 
     def _auth_form(self, window: tk.Toplevel, *, title: str, subtitle: str, fields: list[tuple[str, tk.StringVar, bool]], primary_text: str, primary, secondary_text: str, secondary) -> None:
-        shell = tk.Frame(window, bg=APP_BG, padx=24, pady=24)
+        shell = tk.Frame(window, bg=APP_BG, padx=28, pady=24)
         shell.pack(fill='both', expand=True)
 
-        hero = tk.Frame(shell, bg=APP_BG)
-        hero.pack(fill='x', pady=(0, 16))
-        badge = tk.Canvas(hero, width=58, height=58, bg=APP_BG, highlightthickness=0)
-        badge.pack(side='left', anchor='n')
-        badge.create_oval(4, 4, 54, 54, fill=self.accent, outline=self.accent)
-        badge.create_text(29, 29, text='CV', fill=APP_BG, font=('Segoe UI Semibold', 17))
-        hero_text = tk.Frame(hero, bg=APP_BG)
-        hero_text.pack(side='left', fill='x', expand=True, padx=(14, 0))
-        self._label(hero_text, 'CyberVault X', bg=APP_BG, font=('Segoe UI Semibold', 24)).pack(anchor='w')
-        self._label(hero_text, 'Secure local password manager', fg=SUBTEXT, bg=APP_BG, font=('Segoe UI', 10)).pack(anchor='w', pady=(2, 0))
-        chips = tk.Frame(hero_text, bg=APP_BG)
-        chips.pack(anchor='w', pady=(10, 0))
-        for value in ('Local', 'AES-GCM', 'PBKDF2', 'Offline Checks'):
-            tk.Label(chips, text=value, bg=SURFACE_2, fg=TEXT, padx=10, pady=6, font=('Segoe UI Semibold', 8), highlightthickness=1, highlightbackground=BORDER_SOFT).pack(side='left', padx=(0, 6))
+        # Premium header: brand + trustworthy technology chips.
+        header = tk.Frame(shell, bg=APP_BG)
+        header.pack(fill='x', pady=(0, 22))
+        mark = tk.Canvas(header, width=74, height=74, bg=APP_BG, highlightthickness=0)
+        mark.pack(side='left', anchor='n')
+        mark.create_oval(5, 5, 69, 69, fill='#06213A', outline=self.accent, width=2)
+        mark.create_oval(13, 13, 61, 61, outline='#2377FF', width=2)
+        mark.create_text(37, 38, text='CV', fill=self.accent, font=('Segoe UI Semibold', 19))
+        brand = tk.Frame(header, bg=APP_BG)
+        brand.pack(side='left', fill='x', expand=True, padx=(18, 0))
+        self._label(brand, 'CyberVault X', bg=APP_BG, font=('Segoe UI Semibold', 30)).pack(anchor='w')
+        self._label(brand, 'Secure local password manager', fg=SUBTEXT, bg=APP_BG, font=('Segoe UI', 12)).pack(anchor='w', pady=(2, 0))
+        chips = tk.Frame(brand, bg=APP_BG)
+        chips.pack(anchor='w', pady=(16, 0))
+        for value, icon, color in [('LOCAL-FIRST', '⌂', SUCCESS), ('AES-GCM', '▣', self.accent), ('PBKDF2 / ARGON2 READY', '⚿', INFO), ('OFFLINE CHECKS', '◌', SUCCESS)]:
+            tk.Label(chips, text=f'{icon}  {value}', bg=PANEL_DEEP, fg=color, padx=14, pady=8, font=('Segoe UI Semibold', 9), highlightthickness=1, highlightbackground=BORDER).pack(side='left', padx=(0, 10))
+        right_art = tk.Canvas(header, width=230, height=112, bg=APP_BG, highlightthickness=0)
+        right_art.pack(side='right')
+        cx, cy = 155, 60
+        for r, col in [(54, '#0D2B55'), (40, '#0B5FFF'), (25, self.accent)]:
+            right_art.create_oval(cx-r, cy-r, cx+r, cy+r, outline=col, width=2)
+        right_art.create_rectangle(cx-18, cy-6, cx+18, cy+28, outline=self.accent, width=2, fill='#071B35')
+        right_art.create_arc(cx-14, cy-25, cx+14, cy+11, start=0, extent=180, outline=self.accent, width=3)
+        right_art.create_text(cx, cy+11, text='•', fill=TEXT, font=('Segoe UI Semibold', 22))
 
-        card = self._card(shell, bg=CARD_BG, padx=0, pady=0)
-        card.pack(fill='both', expand=True)
-        ci = card.inner
+        # Split panel.  Unlock gets a compact trust footer; setup gets a larger onboarding side rail.
+        main = tk.Frame(shell, bg=APP_BG)
+        main.pack(fill='both', expand=True)
+        form_card = self._glow_card(main, bg=CARD_BG, accent=self.accent, padx=0, pady=0)
+        form_card.pack(side='left', fill='both', expand=True, padx=(0, 18))
+        ci = form_card.inner
+        ci.configure(padx=0, pady=0)
 
-        footer = tk.Frame(ci, bg=CARD_BG, padx=26, pady=18, highlightthickness=1, highlightbackground=BORDER_SOFT)
+        footer = tk.Frame(ci, bg=PANEL_DEEP, padx=28, pady=20, highlightthickness=1, highlightbackground=BORDER_SOFT)
         footer.pack(fill='x', side='bottom')
-        self._label(footer, 'Everything stays encrypted and local on your machine.', fg=MUTED, bg=footer.cget('bg'), wraplength=420, font=('Segoe UI', 9)).pack(side='left')
+        self._label(footer, 'Your vault never leaves this device. All data stays encrypted and local.', fg=SUBTEXT, bg=footer.cget('bg'), wraplength=620, font=('Segoe UI', 10)).pack(side='left')
         footer_buttons = tk.Frame(footer, bg=footer.cget('bg'))
         footer_buttons.pack(side='right')
-        ttk.Button(footer_buttons, text=secondary_text, command=secondary, style='Ghost.TButton').pack(side='left', padx=(0, 8))
-        ttk.Button(footer_buttons, text=primary_text, command=primary, style='Accent.TButton').pack(side='left')
+        ttk.Button(footer_buttons, text=secondary_text, command=secondary, style='Ghost.TButton').pack(side='left', padx=(0, 12))
+        ttk.Button(footer_buttons, text=('Unlock Vault' if primary_text == 'Unlock' else primary_text), command=primary, style='Accent.TButton').pack(side='left')
 
-        body = tk.Frame(ci, bg=CARD_BG, padx=26, pady=26)
+        body = tk.Frame(ci, bg=CARD_BG, padx=34, pady=32)
         body.pack(fill='both', expand=True)
-        self._label(body, title, bg=body.cget('bg'), font=('Segoe UI Semibold', 20)).pack(anchor='w')
-        self._label(body, subtitle, fg=SUBTEXT, bg=body.cget('bg'), font=('Segoe UI', 11), wraplength=620).pack(anchor='w', pady=(8, 18))
+        eyebrow = 'WELCOME BACK' if 'Unlock' in title else 'STEP 1 · LOCAL VAULT SETUP'
+        self._label(body, eyebrow, fg=self.accent, bg=body.cget('bg'), font=('Segoe UI Semibold', 10)).pack(anchor='w')
+        self._label(body, title.replace('personal vault', 'personal vault'), bg=body.cget('bg'), font=('Segoe UI Semibold', 24)).pack(anchor='w', pady=(8, 0))
+        self._label(body, subtitle, fg=SUBTEXT, bg=body.cget('bg'), font=('Segoe UI', 12), wraplength=680).pack(anchor='w', pady=(10, 18))
+        tk.Frame(body, bg=BORDER_SOFT, height=1).pack(fill='x', pady=(0, 20))
 
+        entries: list[tk.Entry] = []
+        password_strength_row = None
         for label, var, masked in fields:
-            self._label(body, label, bg=body.cget('bg'), font=('Segoe UI Semibold', 10)).pack(anchor='w', pady=(10, 0))
+            self._label(body, label, bg=body.cget('bg'), font=('Segoe UI Semibold', 11)).pack(anchor='w', pady=(12, 0))
             field_row = tk.Frame(body, bg=body.cget('bg'))
-            field_row.pack(fill='x', pady=(6, 0))
-            entry = self._styled_entry(field_row, var, show='*' if masked else '')
-            entry.pack(side='left', fill='x', expand=True, ipady=7)
+            field_row.pack(fill='x', pady=(7, 0))
+            entry = tk.Entry(
+                field_row, textvariable=var, show='*' if masked else '', bg=INPUT_BG, fg=TEXT,
+                insertbackground=TEXT, relief='flat', bd=0, highlightthickness=1,
+                highlightbackground=INPUT_BORDER, highlightcolor=self.accent, font=('Segoe UI', 12)
+            )
+            entry.pack(side='left', fill='x', expand=True, ipady=11)
             if masked:
-                visible = tk.BooleanVar(value=False)
-                def toggle(e=entry, v=visible, b=None):
-                    v.set(not v.get())
-                    e.configure(show='' if v.get() else '*')
                 btn = ttk.Button(field_row, text='Show', style='Ghost.TButton')
+                visible = tk.BooleanVar(value=False)
                 btn.configure(command=lambda e=entry, v=visible, b=btn: (v.set(not v.get()), e.configure(show='' if v.get() else '*'), b.configure(text='Hide' if v.get() else 'Show')))
-                btn.pack(side='left', padx=(8, 0))
+                btn.pack(side='left', padx=(10, 0))
+            entries.append(entry)
+            if label == 'Master Password' and 'Create your personal vault' in title:
+                password_strength_row = tk.Frame(body, bg=body.cget('bg'))
+                password_strength_row.pack(fill='x', pady=(8, 4))
+                meter = tk.Canvas(password_strength_row, height=16, bg=body.cget('bg'), highlightthickness=0)
+                meter.pack(side='left', fill='x', expand=True)
+                strength_lbl = self._label(password_strength_row, '0 / 4 criteria met', fg=MUTED, bg=body.cget('bg'), font=('Segoe UI', 10))
+                strength_lbl.pack(side='right', padx=(14, 0))
+                def draw_strength(*_):
+                    pwd = var.get()
+                    checks = [len(pwd) >= 12, any(c.islower() for c in pwd), any(c.isupper() for c in pwd), any(c.isdigit() or not c.isalnum() for c in pwd)]
+                    count = sum(checks)
+                    meter.delete('all')
+                    width = max(meter.winfo_width() or 420, 420)
+                    part = (width - 18) / 4
+                    colors = [DANGER, WARNING, INFO, SUCCESS]
+                    for i in range(4):
+                        fill = colors[min(count-1, 3)] if i < count and count else SURFACE_3
+                        meter.create_rectangle(i*(part+6), 3, i*(part+6)+part, 13, fill=fill, outline='')
+                    strength = 'Too weak' if count < 2 else 'Fair' if count < 3 else 'Strong' if count < 4 else 'Excellent'
+                    strength_lbl.configure(text=f'{count} / 4 criteria met · {strength}', fg=colors[min(max(count-1, 0), 3)] if count else DANGER)
+                var.trace_add('write', draw_strength)
+                meter.bind('<Configure>', draw_strength)
+                draw_strength()
+
+        if 'Create your personal vault' in title:
+            protection = tk.Frame(body, bg=PANEL_DEEP, padx=16, pady=14, highlightthickness=1, highlightbackground=BORDER_SOFT)
+            protection.pack(fill='x', pady=(18, 0))
+            self._label(protection, 'Vault Protection Summary', fg=self.accent, bg=protection.cget('bg'), font=('Segoe UI Semibold', 11)).pack(anchor='w')
+            grid = tk.Frame(protection, bg=protection.cget('bg'))
+            grid.pack(fill='x', pady=(12, 0))
+            for idx, (k, v, icon) in enumerate([('Encryption', 'AES-256-GCM', '▣'), ('Key Derivation', 'PBKDF2 / Argon2 ready', '⚿'), ('Iterations', '600,000+', '↻'), ('Access', 'Local only', '⌂')]):
+                cell = tk.Frame(grid, bg=protection.cget('bg'))
+                cell.grid(row=0, column=idx, sticky='ew', padx=(0 if idx == 0 else 14, 0))
+                grid.grid_columnconfigure(idx, weight=1)
+                self._label(cell, icon, fg=self.accent, bg=cell.cget('bg'), font=('Segoe UI Semibold', 18)).pack(side='left')
+                txt = tk.Frame(cell, bg=cell.cget('bg'))
+                txt.pack(side='left', padx=(8, 0))
+                self._label(txt, k, fg=MUTED, bg=txt.cget('bg'), font=('Segoe UI', 8)).pack(anchor='w')
+                self._label(txt, v, fg=SUBTEXT, bg=txt.cget('bg'), font=('Segoe UI Semibold', 9)).pack(anchor='w')
+
+        last_unlock = next((row.get('timestamp', '') for row in self.manager.get_logs(limit=50) if 'Unlock Success' in row.get('action', '')), '')
+        if last_unlock and 'Unlock' in title:
+            info_row = tk.Frame(body, bg=body.cget('bg'))
+            info_row.pack(fill='x', pady=(18, 0))
+            self._label(info_row, f'◷  Last unlock recorded: {self._fmt_dt(last_unlock)}', fg=SUBTEXT, bg=info_row.cget('bg'), font=('Segoe UI', 10)).pack(side='left')
+            self._label(info_row, 'View recent activity  ›', fg=self.accent, bg=info_row.cget('bg'), font=('Segoe UI Semibold', 10)).pack(side='right')
+
+        side = self._glow_card(main, bg=CARD_BG, accent='#2377FF', padx=22, pady=22)
+        side.pack(side='right', fill='both', padx=(0, 0))
+        side.configure(width=360)
+        side.pack_propagate(False)
+        si = side.inner
+        art = tk.Canvas(si, height=190, bg=si.cget('bg'), highlightthickness=0)
+        art.pack(fill='x')
+        cx, cy = 160, 92
+        for r, color in [(68, '#0B2A52'), (48, '#0B5FFF'), (31, self.accent)]:
+            art.create_polygon(cx, cy-r, cx+int(r*.86), cy-int(r*.5), cx+int(r*.86), cy+int(r*.5), cx, cy+r, cx-int(r*.86), cy+int(r*.5), cx-int(r*.86), cy-int(r*.5), outline=color, fill='' if r != 31 else '#082B52', width=2)
+        art.create_text(cx, cy+2, text='🔒', fill=TEXT, font=('Segoe UI', 30))
+        self._label(si, 'Your data. Your control.' if 'Create' in title else 'Local vault unlock', bg=si.cget('bg'), font=('Segoe UI Semibold', 15)).pack(anchor='w', pady=(12, 0))
+        side_text = 'Create a vault that lives only on your device. Encryption keys are derived locally from your master password.' if 'Create' in title else 'Unlock decrypts your local vault only on this machine. No cloud sync, telemetry, or remote secrets.'
+        self._label(si, side_text, fg=SUBTEXT, bg=si.cget('bg'), font=('Segoe UI', 10), wraplength=300).pack(anchor='w', pady=(8, 14))
+        for heading, detail, icon in [
+            ('100% Local & Private', 'Everything stays on your device.', '▣'),
+            ('Zero-knowledge Architecture', 'The app never stores the master password.', '◉'),
+            ('Strong Cryptography', 'AES-GCM and hardened key derivation.', '◆'),
+            ('Offline-First', 'Works without internet access.', '◌'),
+        ]:
+            row = tk.Frame(si, bg=si.cget('bg'))
+            row.pack(fill='x', pady=(0, 14))
+            tk.Label(row, text=icon, bg=PANEL_DEEP, fg=self.accent, width=3, pady=5, font=('Segoe UI Semibold', 12), highlightthickness=1, highlightbackground=BORDER_SOFT).pack(side='left', anchor='n')
+            text = tk.Frame(row, bg=row.cget('bg'))
+            text.pack(side='left', fill='x', expand=True, padx=(10, 0))
+            self._label(text, heading, bg=text.cget('bg'), font=('Segoe UI Semibold', 10)).pack(anchor='w')
+            self._label(text, detail, fg=MUTED, bg=text.cget('bg'), font=('Segoe UI', 9), wraplength=235).pack(anchor='w', pady=(2, 0))
+
+        def _adapt_auth_layout(_event=None) -> None:
             try:
-                if not hasattr(body, '_cvx_entries'):
-                    body._cvx_entries = []  # type: ignore[attr-defined]
-                body._cvx_entries.append(entry)  # type: ignore[attr-defined]
+                width = main.winfo_width()
+                if width and width < 1040:
+                    if side.winfo_manager():
+                        side.pack_forget()
+                    form_card.pack_configure(padx=(0, 0))
+                    if right_art.winfo_manager():
+                        right_art.pack_forget()
+                else:
+                    if not side.winfo_manager():
+                        side.pack(side='right', fill='both', padx=(0, 0))
+                    form_card.pack_configure(padx=(0, 18))
+                    if not right_art.winfo_manager():
+                        right_art.pack(side='right')
             except Exception:
                 pass
 
-        if 'Create your personal vault' in title:
-            theme_row = tk.Frame(body, bg=body.cget('bg'))
-            theme_row.pack(fill='x', pady=(14, 0))
-            self._label(theme_row, 'Accent Theme', bg=theme_row.cget('bg'), font=('Segoe UI Semibold', 10)).pack(side='left')
-            ttk.Combobox(theme_row, textvariable=self.theme_var, values=list(ACCENTS.keys()), state='readonly', width=16).pack(side='left', padx=(12, 0))
-
-        last_unlock = next((row.get('timestamp', '') for row in self.manager.get_logs(limit=50) if 'Unlock Success' in row.get('action', '')), '')
-        if last_unlock:
-            self._label(body, f'Last unlock recorded: {self._fmt_dt(last_unlock)}', fg=SUBTEXT, bg=body.cget('bg'), font=('Segoe UI', 9)).pack(anchor='w', pady=(14, 0))
+        main.bind('<Configure>', _adapt_auth_layout, add='+')
+        main.after_idle(_adapt_auth_layout)
 
         try:
-            entries = getattr(body, '_cvx_entries', [])
             if entries:
                 entries[0].focus_set()
             window.bind('<Return>', lambda _e: primary())

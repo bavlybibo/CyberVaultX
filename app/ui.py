@@ -15,14 +15,17 @@ from .ui_refresh import RefreshMixin
 class PasswordManagerApp(VisualMixin, PagesMixin, DialogsMixin, ControllersMixin, RefreshMixin, tk.Tk):
     def __init__(self, db_path: str | Path) -> None:
         super().__init__()
-        self.title('CyberVault X — Local Password Security Platform')
-        self.geometry('1420x860')
+        self.title('CyberVaultX — Security Intelligence Vault')
+        self.geometry('1500x900')
         # More presentation-friendly on common laptop/projector resolutions.
-        self.minsize(1120, 700)
+        self.minsize(1160, 720)
         self.configure(bg=APP_BG)
         self.withdraw()
 
         self.manager = VaultManager(db_path)
+        self.real_manager = self.manager
+        self.demo_manager: VaultManager | None = None
+        self.demo_mode_active = False
         self.db_path = Path(db_path)
         self.selected_id: int | None = None
         self.selected_trash_id: int | None = None
@@ -96,13 +99,20 @@ class PasswordManagerApp(VisualMixin, PagesMixin, DialogsMixin, ControllersMixin
         self.generator_easy_read_var = tk.BooleanVar(value=False)
         self.generated_password_var = tk.StringVar()
         self.generator_use_case_var = tk.StringVar(value='General')
-        self.ai_summary_var = tk.StringVar(value='AI Guardian has not generated a plan yet.')
+        self.ai_summary_var = tk.StringVar(value='Deterministic Local Security Coach has not generated a plan yet.')
         self.ai_generated_var = tk.StringVar(value='Generated: -')
-        self.ai_mode_var = tk.StringVar(value='Mode: Local-first Explainable AI Guardian v6 · Site Policy Reasoner + Site Behavior Reasoner + Live Coach UX/UI')
+        self.ai_mode_var = tk.StringVar(value='Mode: Deterministic local analysis · Site Policy Reasoner + Risk Fusion + Live Coach UX/UI')
         self.ai_privacy_var = tk.StringVar(value='Privacy: no raw passwords, full usernames, notes, paths, or backup data.')
-        self.ai_coach_overview_var = tk.StringVar(value='AI Coach overview appears after the vault is analyzed.')
+        self.ai_coach_overview_var = tk.StringVar(value='Local coach overview appears after the vault is analyzed.')
         self.ai_site_mix_var = tk.StringVar(value='Site profile mix: waiting for vault data.')
         self.ai_first_action_var = tk.StringVar(value='First user action: waiting for ranked priority.')
+        self.ai_fusion_var = tk.StringVar(value='Risk fusion: waiting for local telemetry.')
+        self.ai_guardrail_var = tk.StringVar(value='Evidence guardrails: waiting for generated plan.')
+        self.ai_top_signal_var = tk.StringVar(value='Top signal: waiting')
+        self.ai_workflow_var = tk.StringVar(value='Guided workflow: waiting for ranked remediation lanes.')
+        self.ai_graph_var = tk.StringVar(value='Risk graph: waiting for signal/account relationships.')
+        self.ai_truth_var = tk.StringVar(value='Honest limits: deterministic, local, no external model claims.')
+        self.ai_checkpoint_var = tk.StringVar(value='Next checkpoint: generate plan, fix top item, verify, export evidence.')
         self.fix_weak_var = tk.BooleanVar(value=True)
         self.fix_reused_var = tk.BooleanVar(value=True)
         self.fix_old_var = tk.BooleanVar(value=True)
@@ -115,6 +125,8 @@ class PasswordManagerApp(VisualMixin, PagesMixin, DialogsMixin, ControllersMixin
         self.backup_preview_var = tk.StringVar(value='No backup preview generated yet.')
         self.report_privacy_default_var = tk.StringVar(value=self.manager.get_setting('default_report_privacy_level', 'analyst'))
         self.report_summary_var = tk.StringVar(value='No report generated yet. Choose a report type to create a safe preview or export package.')
+        self.report_readiness_var = tk.StringVar(value='Report Readiness: waiting for vault data.')
+        self.report_artifacts_var = tk.StringVar(value='Artifacts after package export: HTML report, audit log, coach summary, manifest, verification output.')
         self.report_history_var = tk.StringVar(value='Report history appears after exports and package verification events.')
         self.backup_status_panel_var = tk.StringVar(value='No encrypted backup has been created in this session.')
         self.backup_recovery_hint_var = tk.StringVar(value='Backups use a separate passphrase and restore preview before modifying the vault.')
@@ -135,6 +147,7 @@ class PasswordManagerApp(VisualMixin, PagesMixin, DialogsMixin, ControllersMixin
         self.owner_var = tk.StringVar()
         self.vault_var = tk.StringVar()
         self.state_var = tk.StringVar()
+        self.demo_banner_var = tk.StringVar(value='')
         self.health_note_var = tk.StringVar()
         self.about_var = tk.StringVar()
         self.system_health_summary_var = tk.StringVar(value='System health has not been checked yet.')

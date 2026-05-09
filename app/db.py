@@ -14,19 +14,41 @@ class VaultDatabase:
     def __init__(self, db_path: str | Path) -> None:
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._meta_cache: dict[str, str | None] = {}
+        self._conn: sqlite3.Connection | None = None
         self._initialize()
+
+    def _connection(self) -> sqlite3.Connection:
+        if self._conn is None:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            conn.execute('PRAGMA foreign_keys=ON')
+            conn.execute('PRAGMA secure_delete=ON')
+            conn.execute('PRAGMA busy_timeout=5000')
+            conn.execute('PRAGMA synchronous=NORMAL')
+            self._conn = conn
+        return self._conn
 
     @contextmanager
     def connect(self):
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        conn.execute('PRAGMA foreign_keys=ON')
-        conn.execute('PRAGMA secure_delete=ON')
-        conn.execute('PRAGMA busy_timeout=5000')
+        conn = self._connection()
         try:
             yield conn
-        finally:
-            conn.close()
+        except Exception:
+            if conn.in_transaction:
+                conn.rollback()
+            raise
+
+    def close(self) -> None:
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
+
+    def __del__(self) -> None:  # pragma: no cover - best-effort process cleanup
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def _initialize(self) -> None:
         with self.connect() as conn:
@@ -131,7 +153,7 @@ class VaultDatabase:
                 )
             current = 2
         if current < 3:
-            # Version 3 adds AI Guardian snapshot state and report privacy levels.
+            # Version 3 adds Local Security Coach snapshot state and report privacy levels.
             defaults = {
                 'ai_last_snapshot_at': '',
                 'privacy_report_level': 'minimal',
@@ -142,7 +164,7 @@ class VaultDatabase:
                     "INSERT INTO app_meta(key, value) VALUES(?, ?) ON CONFLICT(key) DO NOTHING",
                     (key, value),
                 )
-            self._record_migration(conn, 3, 'AI Guardian snapshot state and privacy-safe report defaults')
+            self._record_migration(conn, 3, 'Local Security Coach snapshot state and privacy-safe report defaults')
             current = 3
         if current < 4:
             # Version 4 makes report privacy/export behavior explicit and tracks safety snapshot restore support.
@@ -290,9 +312,13 @@ class VaultDatabase:
             return list(conn.execute('SELECT version, applied_at, description FROM schema_migrations ORDER BY version').fetchall())
 
     def get_meta(self, key: str) -> str | None:
+        if key in self._meta_cache:
+            return self._meta_cache[key]
         with self.connect() as conn:
             row = conn.execute('SELECT value FROM app_meta WHERE key=?', (key,)).fetchone()
-            return row['value'] if row else None
+            value = row['value'] if row else None
+            self._meta_cache[key] = value
+            return value
 
     def set_meta(self, key: str, value: str) -> None:
         with self.connect() as conn:
@@ -301,11 +327,13 @@ class VaultDatabase:
                 (key, value),
             )
             conn.commit()
+        self._meta_cache[key] = value
 
     def delete_meta(self, key: str) -> None:
         with self.connect() as conn:
             conn.execute('DELETE FROM app_meta WHERE key=?', (key,))
             conn.commit()
+        self._meta_cache[key] = None
 
     def get_schema_version(self) -> int:
         try:

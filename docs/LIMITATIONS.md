@@ -1,28 +1,36 @@
-# CyberVault X Limitations
+# CyberVault X - Security Limitations
 
-CyberVault X is a strong product-grade educational release, but it should be presented honestly.
+CyberVault X is a commercial-style academic prototype. These limitations are documented intentionally because honest boundaries make the project more credible.
 
-## Current limitations
+## Runtime memory
 
-1. The breach database is intentionally small and offline for offline speed and portability.
-2. AI Guardian is deterministic and local-rule based; it is not a cloud LLM in this version.
-3. Online favicon lookup is disabled by default and should stay optional because domain lookup can leak saved site names.
-4. The project has privacy-safe audit logging, but SQLite metadata and runtime memory are still local-machine trust concerns.
-5. PyInstaller/EXE validation must be performed on the final Windows delivery machine.
-6. Screenshots in the README should be captured from the actual built app before final submission.
+Python strings cannot be securely zeroized once loaded into runtime memory. CyberVault X reduces exposure through auto-lock behavior, clipboard timeout, redacted reports, and local-only processing, but it cannot provide the same memory-hard guarantees as a native audited password manager.
 
-## Recommended future upgrades
+## Key derivation
 
-- Argon2id or scrypt KDF migration path.
-- Optional Have I Been Pwned k-anonymity check.
-- Signed report package manifest.
-- More granular UI module split under `app/ui/pages`, `app/ui/widgets`, and `app/ui/dialogs`.
-- Automated GUI smoke tests on Windows CI.
+PBKDF2-SHA256 is used for course/demo compatibility and broad Python support. Argon2id is stronger future work because it is memory-hard and more resistant to GPU cracking.
+
+## Report integrity
+
+Report packages include SHA-256 file hashes, a local HMAC-based manifest integrity signature, and a public Ed25519 manifest signature. The HMAC remains vault-local, while the Ed25519 signature can be verified externally with `verify_report_package.py` from the exported package data.
+
+## Audit hash-chain
+
+The local audit hash-chain integrity check can detect accidental edits or unsophisticated tampering. It is not tamper-proof against a privileged local attacker who can modify the database and recompute the chain.
+
+## Breach subset
+
+The bundled `pwned_sha1.txt` file is an offline demo breach-subset, not a complete Have I Been Pwned mirror or live breach-intelligence feed.
+
+## UI toolkit
+
+Tkinter is portable and easy to run in academic environments, but it requires careful spacing, typography, and layout discipline to look premium. A PyQt/PySide UI could be a future upgrade once the service layer is stable.
 
 
-## v5.5.1 Clarifications
+## Passphrase scoring
 
-- The bundled breach data file is a small offline breach-intelligence subset, not the full Have I Been Pwned corpus.
-- The audit log hash chain is tamper-evident for retained local events, not tamper-proof against a privileged database writer.
-- `Payload SHA-256` in reports hashes the canonical report payload. Final HTML/text artifact hashes are recorded in report package manifests.
-- Windows EXE smoke testing must still be performed on a real Windows GUI environment before external release.
+The passphrase model is conservative. It penalizes famous public examples such as `correct horse battery staple`, and it gives generated-style multi-word passphrases a fairer score, but it cannot prove that words were selected randomly. Treat the passphrase entropy estimate as a heuristic, not a mathematical guarantee.
+
+## Demo isolation
+
+The isolated demo vault creates a separate local database with synthetic data and a visible DEMO VAULT banner. The older Create Assessment Workspace action remains for backward compatibility and still asks for explicit confirmation before inserting synthetic data into the current vault.

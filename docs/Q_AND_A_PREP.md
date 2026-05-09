@@ -9,7 +9,7 @@ No. It is deterministic local logic and uses redacted vault metadata.
 **Are reports safe to share?**  
 Use privacy-safe reports. They redact sensitive identifiers and never include plaintext passwords.
 
-**Is breach detection complete?**  
+**Is offline demo breach-subset detection complete?**  
 No. It uses a bundled offline SHA1 subset. It can identify local matches but cannot prove full breach absence.
 
 **Why not PDF by default?**  

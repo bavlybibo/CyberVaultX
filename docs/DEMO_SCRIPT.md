@@ -6,7 +6,7 @@
 4. Show Dashboard metrics and explain that values come from real vault data.
 5. Open Vault and demonstrate search, category filters, copy, reveal, and delete confirmation.
 6. Open Password Analyzer and show entropy, weakness explanation, and recommended action.
-7. Open AI Security Coach and explain severity, confidence, evidence, and fix path.
+7. Open AI-style Deterministic Security Coach and explain severity, confidence, evidence, and fix path.
 8. Export a privacy-safe HTML report and a JSON report.
 9. Create an encrypted backup, then preview restore.
 10. Open System Health and run release preflight from the terminal.

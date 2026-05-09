@@ -107,9 +107,9 @@ class VaultManagerTests(unittest.TestCase):
             title='GitHub', username='user', password='Pass!001', category='Work', tags='', notes='', website='github.com', is_favorite=False
         )
         report_path = Path(self.tmp.name) / 'nested' / 'report.html'
-        self.manager.export_report(report_path)
+        self.manager.export_report(report_path, privacy_safe=True, privacy_level='minimal')
         logs = self.manager.get_logs()
-        report_logs = [row for row in logs if row['action'] == 'Report Exported']
+        report_logs = [row for row in logs if row['action'] == 'Privacy-Safe Report Exported']
         self.assertTrue(report_logs)
         self.assertIn('report.html', report_logs[0]['details'])
         self.assertNotIn(str(self.tmp.name), report_logs[0]['details'])
@@ -164,10 +164,10 @@ class VaultManagerTests(unittest.TestCase):
             title='GitHub', username='user', password='Pass!001', category='Work', tags='', notes='', website='github.com', is_favorite=False
         )
         report_path = Path(self.tmp.name) / 'report.txt'
-        self.manager.export_report(report_path)
+        self.manager.export_report(report_path, privacy_safe=True, privacy_level='minimal')
         report = report_path.read_text(encoding='utf-8')
-        self.assertIn('AI Guardian Summary', report)
-        self.assertIn('AI Guardian Action Plan', report)
+        self.assertIn('Local Security Coach Summary', report)
+        self.assertIn('Local Security Coach Action Plan', report)
 
     def test_ai_summary_export_logs_hide_absolute_paths(self) -> None:
         self.manager.add_credential(
@@ -176,7 +176,7 @@ class VaultManagerTests(unittest.TestCase):
         export_path = Path(self.tmp.name) / 'private' / 'ai-summary.txt'
         self.manager.export_ai_summary(export_path)
         summary = export_path.read_text(encoding='utf-8')
-        self.assertIn('AI Guardian Security Plan', summary)
+        self.assertIn('Local Security Coach Security Plan', summary)
         logs = self.manager.get_logs()
         ai_logs = [row for row in logs if row['action'] == 'AI Summary Exported']
         self.assertTrue(ai_logs)
@@ -388,7 +388,7 @@ class PostureConsistencyTests(unittest.TestCase):
             title='Healthy', username='healthy@example.com', password='N7!vBq#29LmZ@pR4sT6x', category='General', tags='unique', notes='', website='healthy.example', is_favorite=False
         )
         report_path = Path(self.tmp.name) / 'report.html'
-        self.manager.export_report(report_path)
+        self.manager.export_report(report_path, privacy_safe=True, privacy_level='minimal')
         report = report_path.read_text(encoding='utf-8')
         self.assertNotIn('No major issues.', report)
         self.assertIn('No actionable security findings', report)

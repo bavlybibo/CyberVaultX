@@ -16,7 +16,7 @@ const { warnIfSlideHasOverlaps, warnIfSlideElementsOutOfBounds } = loadLayoutHel
 const pptx = new pptxgen();
 pptx.layout = 'LAYOUT_WIDE';
 pptx.author = 'CyberVault X Team';
-pptx.subject = 'Secure Password Manager with End-to-End Encryption';
+pptx.subject = 'Secure Password Manager with Local Encryption at Rest';
 pptx.title = 'CyberVault X Presentation';
 pptx.company = 'Elsewedy University of Technology';
 pptx.lang = 'en-US';
@@ -77,13 +77,13 @@ let s = pptx.addSlide();
 s.background = { color: 'FFFFFF' };
 s.addImage({ path:'assets/app_icon.png', x:0.7, y:0.55, w:0.82, h:0.82 });
 s.addText('CyberVault X', { x:0.7, y:1.65, w:5.8, h:0.7, fontSize:36, bold:true, color:C.navy, margin:0 });
-s.addText('Secure Password Manager with End-to-End Encryption', { x:0.74, y:2.42, w:5.9, h:0.35, fontSize:15, color:C.slate, margin:0 });
+s.addText('Secure Password Manager with Local Encryption at Rest', { x:0.74, y:2.42, w:5.9, h:0.35, fontSize:15, color:C.slate, margin:0 });
 s.addText('CET334 - Cryptographic Algorithms & Protocols', { x:0.74, y:2.93, w:5.4, h:0.25, fontSize:10.5, color:C.teal, bold:true, margin:0 });
 s.addImage({ path:'assets/splash.png', x:7.75, y:0.85, w:4.75, h:3.65 });
 tag(s, 'Local-first', 0.74, 5.25, 1.2);
 tag(s, 'AES-GCM', 2.1, 5.25, 1.1);
 tag(s, 'PBKDF2', 3.35, 5.25, 1.1);
-tag(s, 'AI Guardian', 4.6, 5.25, 1.35);
+tag(s, 'AI-style Local Security Coach', 4.6, 5.25, 1.35);
 s.addText('Professional release package: source code, tests, final report, presentation deck, and live demo plan.', { x:0.74, y:6.25, w:11.5, h:0.3, fontSize:11, color:C.slate, margin:0 });
 finalCheck(s);
 
@@ -104,7 +104,7 @@ s = pptx.addSlide(); addHeader(s, 'Solution overview');
 s.addText('CyberVault X is a local encrypted password manager with security intelligence built around the vault.', { x:0.65, y:1.45, w:11.8, h:0.38, fontSize:16, color:C.slate, margin:0.02 });
 box(s, 'Encrypted Vault', 'AES-GCM encrypted credential fields stored locally in SQLite.', 0.75, 2.25, 3.4, 1.2, C.blue);
 box(s, 'Security Center', 'Weak, reused, breached, stale, and metadata risk analysis.', 4.95, 2.25, 3.4, 1.2, C.orange);
-box(s, 'AI Guardian', 'Local deterministic advisor that turns findings into priority actions.', 9.15, 2.25, 3.4, 1.2, C.teal);
+box(s, 'AI-style Local Security Coach', 'Local deterministic advisor that turns findings into priority actions.', 9.15, 2.25, 3.4, 1.2, C.teal);
 box(s, 'Proof Center', 'Verifies encrypted schema, audit chain, backup preview, and report package hashes.', 0.75, 4.5, 3.4, 1.2, C.green);
 box(s, 'Report Package', 'Privacy-safe executive report, audit log, AI summary, and manifest.', 4.95, 4.5, 3.4, 1.2, C.blue);
 box(s, 'Release Ready', 'Tests, build script, preflight checks, final report, and presentation deck.', 9.15, 4.5, 3.4, 1.2, C.orange);
@@ -120,7 +120,7 @@ s.addShape(pptx.ShapeType.line, { x:9.95, y:3.03, w:1.05, h:0, line:{color:C.dar
 const arch = [
   ['UI', 'Tkinter screens\nDialogs\nDemo flow', 0.65, C.teal],
   ['Manager', 'Vault actions\nSettings\nAuth state', 3.05, C.blue],
-  ['Services', 'Backup\nReports\nAI Guardian\nProof checks', 5.45, C.orange],
+  ['Services', 'Backup\nReports\nAI-style Local Security Coach\nProof checks', 5.45, C.orange],
   ['Crypto', 'AES-GCM\nPBKDF2\nSHA hashes', 7.85, C.green],
   ['SQLite', 'Encrypted rows\nHistory\nAudit log', 10.25, C.navy],
 ];
@@ -161,7 +161,7 @@ const reqs = [
   ['Encrypted Password Vault', 'AES-GCM field encryption, local SQLite, encrypted history'],
   ['Master Password', 'PBKDF2-SHA256, policy validation, unlock throttling'],
   ['Generator', 'Configurable length/classes, entropy feedback, presets'],
-  ['Breach Detection', 'Offline SHA1 dataset with local lookup'],
+  ['Offline Demo Breach-Subset Check', 'Offline SHA1 dataset with local lookup'],
   ['Strength Analysis', 'Weak/reused/breached/stale score and recommendations'],
 ];
 reqs.forEach((r,i)=>{
@@ -174,7 +174,7 @@ finalCheck(s);
 
 // Slide 7
 s = pptx.addSlide(); addHeader(s, 'Product-grade upgrades');
-box(s, 'AI Guardian', 'Local advisor: priority queue, attacker view, fix path, business impact, and projected score gain.', 0.75, 1.7, 3.55, 1.25, C.teal);
+box(s, 'AI-style Local Security Coach', 'Local advisor: priority queue, attacker view, fix path, business impact, and projected score gain.', 0.75, 1.7, 3.55, 1.25, C.teal);
 box(s, 'Security Proof Center', 'One place to prove crypto posture, audit-chain validity, backup preview, and report verification.', 4.9, 1.7, 3.55, 1.25, C.green);
 box(s, 'Tamper evidence', 'Audit events use previous-hash and event-hash linkage to expose log modification.', 9.05, 1.7, 3.55, 1.25, C.orange);
 box(s, 'Encrypted backup', 'Preview restore impact, handle duplicates, rollback on failure, and keep backup metadata versioned.', 0.75, 4.3, 3.55, 1.25, C.blue);
@@ -189,7 +189,7 @@ check(s, 'AES-GCM backup roundtrip and wrong-passphrase failure', 1.0, 2.25, 6.2
 check(s, 'AAD blocks encrypted-field swaps between records/fields', 1.0, 2.7, 6.25);
 check(s, 'Backup import rolls back if validation fails mid-transaction', 1.0, 3.15, 6.25);
 check(s, 'Report package verifier detects tampered artifacts', 1.0, 3.6, 6.25);
-check(s, 'AI Guardian payloads are redacted and privacy-safe', 1.0, 4.05, 6.25);
+check(s, 'AI-style Local Security Coach payloads are redacted and privacy-safe', 1.0, 4.05, 6.25);
 check(s, 'Release preflight checks final submission assets', 1.0, 4.5, 6.25);
 s.addText('Commands', { x:8.4, y:2.22, w:3.0, h:0.25, fontSize:11.5, bold:true, color:C.navy, margin:0 });
 s.addText('python -m pytest -q tests\npython tools/release_preflight.py\nbuild_release.bat', { x:8.4, y:2.65, w:3.7, h:1.3, fontSize:11, color:C.slate, margin:0.08, fill:{color:'F2F4F7'}, line:{color:C.line, width:0.8}, fit:'shrink' });
@@ -199,7 +199,7 @@ finalCheck(s);
 // Slide 9
 s = pptx.addSlide(); addHeader(s, 'Live demo path');
 const demo = [
-  'Create or unlock vault', 'Create Assessment Workspace', 'Dashboard health score', 'Security Center findings', 'Generate AI Guardian plan', 'Generate replacement password', 'Run Security Proof Center', 'Export and verify report package', 'Encrypted backup preview', 'Panic lock'
+  'Create or unlock vault', 'Create Assessment Workspace', 'Dashboard health score', 'Security Center findings', 'Generate AI-style Local Security Coach plan', 'Generate replacement password', 'Run Security Proof Center', 'Export and verify report package', 'Encrypted backup preview', 'Panic lock'
 ];
 demo.forEach((t,i)=>{
   const col = i < 5 ? 0 : 1;
@@ -215,9 +215,9 @@ finalCheck(s);
 s = pptx.addSlide(); addHeader(s, 'Honest limitations');
 box(s, 'Breach database', 'Bundled file is a small offline demo subset. Future: custom import wizard or HIBP k-anonymity.', 0.8, 1.65, 3.55, 1.2, C.orange);
 box(s, 'Runtime memory', 'Python cannot fully guarantee string zeroization. Auto-lock and clipboard clearing reduce exposure.', 4.9, 1.65, 3.55, 1.2, C.red);
-box(s, 'Report signing', 'HMAC proves local integrity. Future: Ed25519 public verification key for independent proof.', 9.0, 1.65, 3.55, 1.2, C.blue);
+box(s, 'Local manifest integrity signature', 'HMAC provides local manifest integrity. Future: Ed25519 public verification key for independent proof.', 9.0, 1.65, 3.55, 1.2, C.blue);
 box(s, 'GUI toolkit', 'Tkinter improves portability. Service layers allow future PyQt5 migration if required.', 0.8, 4.25, 3.55, 1.2, C.teal);
-box(s, 'Commercial readiness', 'Academic prototype. Commercial version needs external audit, installer signing, and secure-memory hardening.', 4.9, 4.25, 3.55, 1.2, C.green);
+box(s, 'Commercial-style academic readiness', 'Commercial-style academic prototype. Future production version needs external audit, installer signing, and secure-memory hardening.', 4.9, 4.25, 3.55, 1.2, C.green);
 box(s, 'Screenshots', 'Real screenshots must be captured on the Windows demo machine after building the EXE.', 9.0, 4.25, 3.55, 1.2, C.orange);
 finalCheck(s);
 
@@ -245,7 +245,7 @@ s.addImage({path:'assets/app_icon.png', x:0.75, y:0.65, w:0.85, h:0.85});
 s.addText('CyberVault X', {x:0.75, y:1.85, w:5.4, h:0.65, fontSize:34, bold:true, color:'FFFFFF', margin:0});
 s.addText('Local encryption. Practical security. Demo-ready proof.', {x:0.78, y:2.62, w:6.6, h:0.35, fontSize:16, color:'D1E7EF', margin:0});
 s.addText('Q&A', {x:0.78, y:4.3, w:2.8, h:0.6, fontSize:26, bold:true, color:'FFFFFF', margin:0});
-s.addText('Prepared answers cover AES-GCM, PBKDF2, AAD, breach detection, AI Guardian privacy, Tkinter choice, and project limitations.', {x:0.8, y:5.05, w:6.8, h:0.6, fontSize:12, color:'CBD5E1', margin:0.02, fit:'shrink'});
+s.addText('Prepared answers cover AES-GCM, PBKDF2, AAD, offline demo breach-subset detection, AI-style Local Security Coach privacy, Tkinter choice, and project limitations.', {x:0.8, y:5.05, w:6.8, h:0.6, fontSize:12, color:'CBD5E1', margin:0.02, fit:'shrink'});
 s.addImage({ path:'assets/splash.png', x:7.7, y:1.05, w:4.75, h:3.6 });
 finalCheck(s);
 

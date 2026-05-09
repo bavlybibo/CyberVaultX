@@ -275,7 +275,7 @@ class ProductIntelligenceMixin:
             ('Current posture', base, 'Current weighted vault health score'),
             ('After MFA metadata review', min(100, base + 4), 'Mark accounts with verified MFA and fill missing ownership tags'),
             ('After rotating weak/reused passwords', min(100, base + 14), 'Break credential stuffing and password reuse chains'),
-            ('After backup/report verification', min(100, base + 19), 'Prove restore readiness and tamper-evident reporting'),
+            ('After backup/report verification', min(100, base + 19), 'Prove restore readiness and local manifest integrity reporting'),
             ('After monthly hygiene cycle', min(100, base + 24), 'Repeat review, export audit head, and keep stale credentials low'),
         ]
         return [{'stage': name, 'score': score, 'note': note} for name, score, note in stages]
@@ -330,7 +330,7 @@ class ProductIntelligenceMixin:
             '- Export an encrypted backup.',
             '- Export and verify a report package.',
             '- Export the audit head hash and store it outside the vault folder.',
-            '- Review AI Guardian priority items and mark verified fixes.',
+            '- Review AI-style Local Security Coach priority items and mark verified fixes.',
             '- Remove or rotate stale/reused/weak credentials.',
             '',
             'Limitations',

@@ -2,16 +2,16 @@
 
 Capture these from the Windows EXE build, not from source, so the README and final report represent the actual deliverable.
 
-Recommended resolution: 1420×880 or 1600×900.
+Recommended resolution: 1420x880 or 1600x900.
 
-1. `assets/screenshots/01_dashboard.png` — dashboard after creating the assessment workspace.
-2. `assets/screenshots/02_vault.png` — vault editor with a selected assessment credential, password masked.
-3. `assets/screenshots/03_security_center.png` — findings table with risk explanation.
-4. `assets/screenshots/04_ai_guardian_v2.png` — AI Guardian after generating a smart plan with attack/business/fix explanations.
-5. `assets/screenshots/05_security_proof_center.png` — Proof Center after **Run Proof Checks**.
-6. `assets/screenshots/06_activity_filters.png` — Activity page with filters visible.
-7. `assets/screenshots/07_report_package_verifier.png` — Proof Center after verifying an exported report package.
-8. `assets/screenshots/08_build_output.png` — successful `build_release.bat` output.
-9. `assets/screenshots/09_unittest_output.png` — successful `python -m unittest discover -s tests -v` output.
+1. `assets/screenshots/dashboard.png` - Health score, findings, vault metrics, and assessment status.
+2. `assets/screenshots/vault.png` - Searchable vault table with safe masked credentials.
+3. `assets/screenshots/security_center.png` - Weak/reused/stale/local breach-subset findings with severity.
+4. `assets/screenshots/ai_security_coach.png` - Deterministic local risk plan and remediation queue.
+5. `assets/screenshots/proof_center.png` - Crypto posture, audit hash-chain, package verification, backup preview.
+6. `assets/screenshots/report_package.png` - Privacy-safe HTML/JSON evidence package and manifest.
+7. `assets/screenshots/backup_preview.png` - Backup metadata, restore impact, and duplicate handling.
+8. `assets/screenshots/settings.png` - Auto-lock, clipboard timeout, privacy/export levels.
+9. `assets/screenshots/test_output.png` - pytest, coverage, release preflight, and build evidence.
 
-Keep screenshots privacy-safe. Use the built-in assessment workspace only.
+Current placeholder images must be replaced with real screenshots before final submission. Keep screenshots privacy-safe and use the built-in Assessment Workspace only.

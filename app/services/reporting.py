@@ -9,8 +9,17 @@ from pathlib import Path
 from typing import Any
 
 from ..io_utils import atomic_write_text, safe_display_path
-from ..security_policy import mask_identifier, privacy_safe_title
-from .signing import REPORT_SIGNATURE_ALGORITHM, sign_manifest, signing_key_fingerprint
+from ..security_policy import mask_identifier, privacy_safe_title, universal_redact
+from .signing import (
+    PUBLIC_SIGNATURE_ALGORITHM,
+    REPORT_SIGNATURE_ALGORITHM,
+    generate_public_signing_private_key_b64,
+    public_key_b64_from_private,
+    public_key_fingerprint,
+    sign_manifest,
+    sign_manifest_public,
+    signing_key_fingerprint,
+)
 
 PRIVACY_LEVELS = {'minimal', 'standard', 'analyst'}
 
@@ -21,17 +30,100 @@ def utc_now_iso() -> str:
 
 class ReportServiceMixin:
 
+    FULL_REPORT_WARNING_VERSION = 'full-report-warning-v2'
+
+    def _sensitive_export_values(self) -> list[str]:
+        values = [str(self.db.db_path), str(self.db.db_path.parent), self.owner_name, self.vault_name]
+        try:
+            for credential in self.list_credentials(include_deleted=True):
+                values.extend([
+                    credential.password, credential.notes, credential.username, credential.website, credential.title,
+                    credential.category, credential.tags,
+                ])
+        except Exception:
+            pass
+        return [str(value) for value in values if str(value or '').strip()]
+
+    def issue_full_export_reauth_token(self, master_password: str, *, ttl_seconds: int = 300) -> str:
+        """Verify master password and issue a short-lived in-memory full-export token.
+
+        The token is intentionally not persisted. It proves the GUI or caller
+        completed the warning/re-auth flow before requesting a private full
+        report from the service layer.
+        """
+        if not master_password or not self.verify_master_password_only(master_password):
+            self.add_log('Full Report Export Blocked', 'Master password re-authentication failed before full report export.', 'warning')
+            raise PermissionError('Full report export requires successful master password re-authentication.')
+        token = secrets.token_urlsafe(32)
+        expires = datetime.now(timezone.utc).timestamp() + max(30, int(ttl_seconds))
+        if not hasattr(self, '_full_export_tokens'):
+            self._full_export_tokens = {}
+        self._full_export_tokens[token] = expires
+        self.add_log('Full Report Re-authenticated', 'Full report export re-authentication token issued.', 'success')
+        return token
+
+    def _consume_full_export_token(self, token: str | None) -> bool:
+        if not token or not hasattr(self, '_full_export_tokens'):
+            return False
+        expires = self._full_export_tokens.pop(str(token), None)
+        if expires is None:
+            return False
+        return datetime.now(timezone.utc).timestamp() <= float(expires)
+
+    def _audit_event_type(self, action: str) -> str:
+        import re
+        normalized = re.sub(r'[^a-z0-9]+', '_', str(action or '').strip().lower()).strip('_')
+        return normalized or 'audit_event'
+
+    def _safe_audit_event(self, row: dict[str, Any], *, privacy_level: str = 'standard') -> dict[str, str]:
+        action = universal_redact(str(row.get('action', 'Audit Event')), level=privacy_level, extra_values=self._sensitive_export_values())
+        details = universal_redact(str(row.get('details', '')), level=privacy_level, extra_values=self._sensitive_export_values())
+        event_type = self._audit_event_type(action)
+        safe_message = details or 'Audit event recorded. Sensitive values are not exported.'
+        credential_ref = ''
+        import re
+        match = re.search(r'credential\s*#\s*(\d+)', safe_message, flags=re.IGNORECASE)
+        if match:
+            credential_ref = f"Credential #{match.group(1)}"
+        return {
+            'timestamp': str(row.get('timestamp', '')),
+            'event_type': event_type,
+            'action': action,
+            'severity': str(row.get('severity', 'info')),
+            'credential_ref': credential_ref,
+            'safe_message': safe_message,
+            'redaction_status': 'safe',
+        }
+
     def _get_report_signing_secret(self, *, create: bool = True) -> str:
-        """Return the local report-package signing secret, creating it when needed."""
+        """Return the vault-local HMAC report-package signing secret."""
         secret = self._get_sensitive_meta('report_signing_secret', '') if hasattr(self, '_get_sensitive_meta') else ''
         if not secret and create:
             secret = secrets.token_urlsafe(32)
             self._encrypt_sensitive_meta(self.require_key(), 'report_signing_secret', secret)
             self.set_setting('report_signing_key_fingerprint', signing_key_fingerprint(secret))
-            self.add_log('Report Signing Key Created', 'Created the local report-package signing key.', 'success')
+            self.add_log('Report Signing Key Created', 'Created the local report-package HMAC signing key.', 'success')
         if secret:
             self.set_setting('report_signing_key_fingerprint', signing_key_fingerprint(secret))
         return secret
+
+    def _get_public_report_signing_private_key(self, *, create: bool = True) -> str:
+        """Return the encrypted Ed25519 private key used for public package verification.
+
+        The exported package contains only the public key and public signature,
+        which lets a reviewer verify package integrity without knowing the
+        vault-local HMAC secret.  The private key stays encrypted inside the
+        vault metadata.
+        """
+        private_key = self._get_sensitive_meta('report_ed25519_private_key', '') if hasattr(self, '_get_sensitive_meta') else ''
+        if not private_key and create:
+            private_key = generate_public_signing_private_key_b64()
+            self._encrypt_sensitive_meta(self.require_key(), 'report_ed25519_private_key', private_key)
+            self.add_log('Public Report Signing Key Created', 'Created the encrypted Ed25519 report-package signing key.', 'success')
+        if private_key:
+            public_key = public_key_b64_from_private(private_key)
+            self.set_setting('report_ed25519_public_key_fingerprint', public_key_fingerprint(public_key))
+        return private_key
 
     def _privacy_safe_findings(self, findings: list[dict[str, Any]], *, level: str = 'minimal') -> list[dict[str, Any]]:
         level = level if level in PRIVACY_LEVELS else 'minimal'
@@ -102,8 +194,36 @@ class ReportServiceMixin:
         payload['report_hash'] = payload['payload_hash']
         return payload
 
-    def export_report(self, path: str | Path, *, privacy_safe: bool = False, privacy_level: str = 'minimal') -> Path:
+    def export_report(
+        self,
+        path: str | Path,
+        *,
+        privacy_safe: bool = False,
+        privacy_level: str = 'minimal',
+        full_export_ack: bool = False,
+        reauth_token: str | None = None,
+        warning_version: str | None = None,
+    ) -> Path:
         dest = Path(path)
+        if not privacy_safe:
+            if not full_export_ack:
+                self.add_log('Full Report Export Blocked', 'Full report export rejected: missing explicit acknowledgment.', 'warning')
+                raise PermissionError('Full report export requires explicit acknowledgment of the identifier warning.')
+            if warning_version != self.FULL_REPORT_WARNING_VERSION:
+                self.add_log('Full Report Export Blocked', 'Full report export rejected: warning version was not recorded.', 'warning')
+                raise PermissionError('Full report export requires the current warning version to be recorded.')
+            if not self._consume_full_export_token(reauth_token):
+                self.add_log('Full Report Export Blocked', 'Full report export rejected: missing or expired re-authentication token.', 'warning')
+                raise PermissionError('Full report export requires a valid recent re-authentication token.')
+            self.add_log(
+                'FULL_REPORT_EXPORT_APPROVED',
+                f'Private full report export approved after warning {warning_version}. Destination: {safe_display_path(dest)}.',
+                'warning',
+            )
+        if privacy_safe and hasattr(self, 'check_privacy_safe_export'):
+            privacy_check = self.check_privacy_safe_export(privacy_level=privacy_level)
+            if not privacy_check.get('ok'):
+                raise ValueError('Privacy-safe export check failed: ' + '; '.join(privacy_check.get('issues', [])[:3]))
         payload = self._report_payload(privacy_safe=privacy_safe, privacy_level=privacy_level)
         suffix = dest.suffix.lower()
         if suffix == '.html':
@@ -151,42 +271,60 @@ class ReportServiceMixin:
         signing_secret = self._get_report_signing_secret(create=True)
         package_payload['signature_algorithm'] = REPORT_SIGNATURE_ALGORITHM
         package_payload['signing_key_fingerprint'] = signing_key_fingerprint(signing_secret)
+
+        public_private_key = self._get_public_report_signing_private_key(create=True)
+        public_key = public_key_b64_from_private(public_private_key)
+        package_payload['public_signature_algorithm'] = PUBLIC_SIGNATURE_ALGORITHM
+        package_payload['signing_public_key_b64'] = public_key
+        package_payload['signing_public_key_fingerprint'] = public_key_fingerprint(public_key)
+        package_payload['public_manifest_signature'] = sign_manifest_public(package_payload, public_private_key)
         package_payload['manifest_signature'] = sign_manifest(package_payload, signing_secret)
         manifest_path = dest / 'manifest.json'
         atomic_write_text(manifest_path, json.dumps(package_payload, ensure_ascii=False, indent=2, sort_keys=True), encoding='utf-8')
+        verification = self.verify_report_package(dest) if hasattr(self, 'verify_report_package') else {'ok': True, 'checks': []}
+        atomic_write_text(dest / 'verification_output.txt', json.dumps(verification, ensure_ascii=False, indent=2, sort_keys=True), encoding='utf-8')
+        self.set_setting('last_report_package_dir', str(dest))
         self.add_log('Report Package Exported', f'Exported report package to {safe_display_path(dest)}.', 'success')
         return dest
 
     def export_audit_log(self, path: str | Path, *, privacy_level: str = 'standard') -> Path:
         dest = Path(path)
         rows = self.get_logs(limit=1000)
-        safe_rows = []
-        for row in rows:
-            details = str(row.get('details', ''))
-            if privacy_level in {'minimal', 'standard'}:
-                details = details.replace(str(self.db.db_path.parent), '[vault-dir]')
-            safe_rows.append({
-                'timestamp': str(row.get('timestamp', '')),
-                'action': str(row.get('action', '')),
-                'severity': str(row.get('severity', 'info')),
-                'details': details,
-            })
-        if dest.suffix.lower() == '.html':
+        safe_rows = [self._safe_audit_event(dict(row), privacy_level=privacy_level) for row in rows]
+        if dest.suffix.lower() == '.json':
+            payload = {
+                'title': 'CyberVault X Audit Activity',
+                'generated_at': utc_now_iso(),
+                'privacy_level': privacy_level,
+                'redaction_model': 'structured safe audit events; raw details are never exported directly',
+                'events': safe_rows,
+            }
+            payload['sha256'] = hashlib.sha256(json.dumps(safe_rows, sort_keys=True).encode('utf-8')).hexdigest()
+            atomic_write_text(dest, json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding='utf-8')
+        elif dest.suffix.lower() == '.html':
             table_rows = ''.join(
-                f"<tr><td>{html.escape(item['timestamp'])}</td><td>{html.escape(item['action'])}</td><td>{html.escape(item['severity'])}</td><td>{html.escape(item['details'])}</td></tr>"
+                f"<tr><td>{html.escape(item['timestamp'])}</td><td>{html.escape(item['event_type'])}</td><td>{html.escape(item['severity'])}</td><td>{html.escape(item['credential_ref'])}</td><td>{html.escape(item['safe_message'])}</td><td>{html.escape(item['redaction_status'])}</td></tr>"
                 for item in safe_rows
-            ) or '<tr><td colspan="4">No audit events recorded yet.</td></tr>'
+            ) or '<tr><td colspan="6">No audit events recorded yet.</td></tr>'
             digest = hashlib.sha256(json.dumps(safe_rows, sort_keys=True).encode('utf-8')).hexdigest()
             atomic_write_text(dest, f"""<!doctype html>
 <html lang='en'><head><meta charset='utf-8'><title>CyberVault X Audit Activity</title>
-<style>body{{font-family:Segoe UI,Arial,sans-serif;background:#07111f;color:#eef4ff;padding:28px}}table{{width:100%;border-collapse:collapse}}th,td{{padding:10px;border-bottom:1px solid #233a5c;text-align:left}}th{{color:#9db1d0}}.muted{{color:#9db1d0}}@media print{{body{{background:#fff;color:#111827}}th{{color:#374151}}th,td{{border-bottom:1px solid #cbd5e1}}}}</style></head>
-<body><h1>CyberVault X Audit Activity</h1><p class='muted'>Generated {utc_now_iso()} · Privacy level: {html.escape(privacy_level)} · SHA-256 {digest}</p><table><thead><tr><th>Timestamp</th><th>Action</th><th>Severity</th><th>Details</th></tr></thead><tbody>{table_rows}</tbody></table></body></html>""", encoding='utf-8')
+<style>body{{font-family:Segoe UI,Arial,sans-serif;background:#07111f;color:#eef4ff;padding:28px}}table{{width:100%;border-collapse:collapse}}th,td{{padding:10px;border-bottom:1px solid #233a5c;text-align:left;vertical-align:top}}th{{color:#9db1d0}}.muted{{color:#9db1d0}}@media print{{body{{background:#fff;color:#111827}}th{{color:#374151}}th,td{{border-bottom:1px solid #cbd5e1}}}}</style></head>
+<body><h1>CyberVault X Audit Activity</h1><p class='muted'>Generated {utc_now_iso()} · Privacy level: {html.escape(privacy_level)} · SHA-256 {digest}</p><p class='muted'>Structured export: raw audit details are not exported directly; safe_message contains redacted summaries only.</p><table><thead><tr><th>Timestamp</th><th>Event Type</th><th>Severity</th><th>Credential Ref</th><th>Safe Message</th><th>Redaction</th></tr></thead><tbody>{table_rows}</tbody></table></body></html>""", encoding='utf-8')
         else:
-            lines = [f"CyberVault X Audit Activity", f"Generated: {utc_now_iso()}", f"Privacy level: {privacy_level}", '=' * 58]
+            lines = [
+                'CyberVault X Audit Activity',
+                f'Generated: {utc_now_iso()}',
+                f'Privacy level: {privacy_level}',
+                'Redaction model: structured safe audit events; raw details are never exported directly',
+                '=' * 58,
+            ]
             for item in safe_rows:
-                lines.append(f"[{item['timestamp']}] {item['severity'].upper()} {item['action']} — {item['details']}")
+                lines.append(
+                    f"[{item['timestamp']}] {item['severity'].upper()} {item['event_type']} | {item['credential_ref'] or 'n/a'} | {item['safe_message']} | redaction={item['redaction_status']}"
+                )
             digest = hashlib.sha256('\n'.join(lines).encode('utf-8')).hexdigest()
-            lines.insert(3, f"SHA-256: {digest}")
+            lines.insert(4, f'SHA-256: {digest}')
             atomic_write_text(dest, '\n'.join(lines), encoding='utf-8')
         self.add_log('Audit Log Exported', f'Exported audit log to {safe_display_path(dest)}.')
         return dest
@@ -198,7 +336,7 @@ class ReportServiceMixin:
         safe_payload['limitations'] = [
             'Breach checks use the bundled offline SHA-1 subset only.',
             'Reports summarize password risk without exporting plaintext passwords.',
-            'AI Guardian output is deterministic local guidance, not an external LLM verdict.',
+            'Local Security Coach output is deterministic local guidance, not an external LLM verdict.',
         ]
         atomic_write_text(
             dest,
@@ -222,27 +360,27 @@ class ReportServiceMixin:
             'Overview',
             *(f"- {k.replace('_', ' ').title()}: {v}" for k, v in metrics.items()),
             '',
-            'AI Guardian Summary',
+            'Local Security Coach Summary',
             payload['ai_plan']['executive_summary'],
             '',
-            'AI Guardian Action Plan',
+            'Local Security Coach Action Plan',
             *(f"- Today: {item}" for item in payload['ai_plan']['action_plan'].get('today', [])),
             *(f"- This Week: {item}" for item in payload['ai_plan']['action_plan'].get('this_week', [])),
             *(f"- Long-Term: {item}" for item in payload['ai_plan']['action_plan'].get('long_term', [])),
             '',
-            'AI Guardian: What Changed',
+            'Local Security Coach: What Changed',
             *(f"- {item}" for item in payload['ai_plan'].get('change_summary', [])),
             '',
-            'AI Guardian: Decision Matrix',
+            'Local Security Coach: Decision Matrix',
             *(f"- {row.get('lens', 'Decision')}: {row.get('status', '-')} — {row.get('why', '')} | Next: {row.get('next_step', '')}" for row in payload['ai_plan'].get('decision_matrix', [])),
             '',
-            'AI Guardian: Posture Heatmap',
+            'Local Security Coach: Posture Heatmap',
             *(f"- {row.get('area', '-')}: {row.get('heat', '-')} ({row.get('count', 0)}) — {row.get('guidance', '')}" for row in payload['ai_plan'].get('posture_heatmap', [])),
             '',
-            'AI Guardian: Quality Gates',
+            'Local Security Coach: Quality Gates',
             *(f"- {row.get('gate', '-')}: {row.get('status', '-')} — {row.get('detail', '')}" for row in payload['ai_plan'].get('quality_gates', [])),
             '',
-            'AI Guardian: Fix Impact Simulation',
+            'Local Security Coach: Fix Impact Simulation',
             f"- Current score: {payload['ai_plan'].get('fix_impact', {}).get('current_score', 'n/a')}/100",
             f"- Projected score: {payload['ai_plan'].get('fix_impact', {}).get('projected_score', 'n/a')}/100",
             f"- Estimated gain: {payload['ai_plan'].get('fix_impact', {}).get('estimated_gain', 'n/a')}",
@@ -332,7 +470,7 @@ class ReportServiceMixin:
         ) or '<tr><td colspan="5">No active penalties. The score is currently supported by healthy posture.</td></tr>'
         overall_class = 'critical' if metrics['health_score'] < 50 else 'high' if metrics['health_score'] < 70 else 'moderate' if metrics['health_score'] < 85 else 'low'
         ai_plan = payload.get('ai_plan', {})
-        ai_summary = html.escape(str(ai_plan.get('executive_summary', 'AI Guardian summary unavailable.')))
+        ai_summary = html.escape(str(ai_plan.get('executive_summary', 'Local Security Coach summary unavailable.')))
         ai_explanation = html.escape(str(ai_plan.get('ai_style_explanation', '')))
         ai_action_plan = ai_plan.get('action_plan', {}) if isinstance(ai_plan.get('action_plan', {}), dict) else {}
         ai_today = ''.join(f'<li>{html.escape(str(item))}</li>' for item in ai_action_plan.get('today', [])) or '<li>No urgent action detected.</li>'
@@ -341,14 +479,14 @@ class ReportServiceMixin:
         ai_priorities = ''.join(
             f"<tr><td>{html.escape(str(item.get('credential_ref', 'Credential')))}</td>"
             f"<td>{html.escape(str(item.get('risk_level', 'Low')))}</td>"
-            f"<td>{html.escape(str(item.get('primary_signal', 'Signal')))}<br><span class='muted'>{html.escape(str(item.get('confidence_percent', 0)))}% confidence</span></td>"
+            f"<td>{html.escape(str(item.get('primary_signal', 'Signal')))}<br><span class='muted'>{html.escape(str(item.get('confidence_percent', 0)))}% heuristic confidence</span></td>"
             f"<td>{html.escape(str(item.get('timeline', 'Review')))}</td>"
             f"<td>{html.escape(str(item.get('why', '')))}<br><span class='muted'>{html.escape(str(item.get('exposure_path', '')))}</span></td>"
             f"<td>{html.escape(str(item.get('attack_scenario', '')))}</td>"
             f"<td>{html.escape(str(item.get('business_impact', '')))}</td>"
             f"<td>{html.escape(str(item.get('recommended_action', '')))}<br><span class='muted'>Expected score gain: +{html.escape(str(item.get('expected_score_gain', 0)))}</span></td></tr>"
             for item in ai_plan.get('priority_items', [])[:5]
-        ) or '<tr><td colspan="8">No AI Guardian priority items detected.</td></tr>'
+        ) or '<tr><td colspan="8">No Local Security Coach priority items detected.</td></tr>'
         ai_decisions = ''.join(
             f"<li><strong>{html.escape(str(row.get('lens', 'Decision')))}:</strong> {html.escape(str(row.get('status', '-')))} — {html.escape(str(row.get('why', '')))}<br><span class='muted'>Next: {html.escape(str(row.get('next_step', '')))}</span></li>"
             for row in ai_plan.get('decision_matrix', [])
@@ -426,7 +564,7 @@ th,td {{ text-align:left; padding:10px 12px; border-bottom:1px solid #233a5c; fo
   </div>
 
   <section class='panel' style='margin-top:18px;'>
-    <h2>CyberVault AI Guardian</h2>
+    <h2>CyberVault Local Security Coach</h2>
     <p class='muted'>{ai_summary}</p>
     <div class='columns'>
       <div>
@@ -473,7 +611,7 @@ th,td {{ text-align:left; padding:10px 12px; border-bottom:1px solid #233a5c; fo
       </div>
       <div>
         <h4>Privacy Model</h4>
-        <p class='muted'>AI Guardian uses redacted local telemetry only. Raw passwords, notes, and master keys are excluded.</p>
+        <p class='muted'>Local Security Coach uses redacted local telemetry only. Raw passwords, notes, master keys, and cloud AI requests are excluded. Confidence is heuristic policy confidence, not calibrated ML accuracy.</p>
       </div>
     </div>
   </section>

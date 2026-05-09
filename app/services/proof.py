@@ -8,7 +8,14 @@ from typing import Any
 from ..crypto_utils import BACKUP_FORMAT, LEGACY_BACKUP_AAD_FALLBACK_ENV, MIN_BACKUP_KDF_ITERATIONS, PBKDF2_ITERATIONS
 from ..io_utils import safe_display_path
 from .backup import utc_now_iso
-from .signing import REPORT_SIGNATURE_ALGORITHM, signing_key_fingerprint, verify_manifest_signature
+from .signing import (
+    PUBLIC_SIGNATURE_ALGORITHM,
+    REPORT_SIGNATURE_ALGORITHM,
+    public_key_fingerprint,
+    signing_key_fingerprint,
+    verify_manifest_public_signature,
+    verify_manifest_signature,
+)
 
 
 ZERO_HASH = '0' * 64
@@ -136,9 +143,14 @@ class ProofServiceMixin:
                 'details': f"Verifier accepts only: {', '.join(sorted(ALLOWED_REPORT_PACKAGE_FILES))}.",
             },
             {
-                'name': 'Report package signing enabled',
+                'name': 'Report package local HMAC signing enabled',
                 'status': True,
-                'details': f"Manifest signing uses {REPORT_SIGNATURE_ALGORITHM}; fingerprint: {self.get_setting('report_signing_key_fingerprint', 'not-created-yet')}.",
+                'details': f"Local vault integrity proof uses {REPORT_SIGNATURE_ALGORITHM}; local HMAC is not independently verifiable without the vault-local secret. Fingerprint: {self.get_setting('report_signing_key_fingerprint', 'not-created-yet')}.",
+            },
+            {
+                'name': 'Report package public verification enabled',
+                'status': True,
+                'details': f"Exported packages include {PUBLIC_SIGNATURE_ALGORITHM}, a public key, and an independently verifiable manifest signature. Public fingerprint: {self.get_setting('report_ed25519_public_key_fingerprint', 'not-created-yet')}.",
             },
             {
                 'name': 'KDF hardening policy',
@@ -224,6 +236,18 @@ class ProofServiceMixin:
         if not package_hash_valid:
             all_valid = False
 
+        public_signature_present = bool(str(manifest.get('public_manifest_signature', '')))
+        public_signature_valid = verify_manifest_public_signature(manifest)
+        expected_public_fingerprint = str(manifest.get('signing_public_key_fingerprint', ''))
+        actual_public_fingerprint = public_key_fingerprint(str(manifest.get('signing_public_key_b64', '')))
+        public_signature_fingerprint_match = bool(
+            expected_public_fingerprint
+            and actual_public_fingerprint
+            and expected_public_fingerprint == actual_public_fingerprint
+        )
+        if not public_signature_present or not public_signature_valid or not public_signature_fingerprint_match:
+            all_valid = False
+
         signing_secret = ''
         if getattr(self, 'is_unlocked', False) and hasattr(self, '_get_report_signing_secret'):
             signing_secret = self._get_report_signing_secret(create=False)
@@ -233,16 +257,30 @@ class ProofServiceMixin:
         expected_fingerprint = str(manifest.get('signing_key_fingerprint', ''))
         actual_fingerprint = signing_key_fingerprint(signing_secret)
         signature_fingerprint_match = bool(expected_fingerprint and actual_fingerprint and expected_fingerprint == actual_fingerprint)
-        if signature_present and signature_checked and (not signature_valid or not signature_fingerprint_match):
+        local_signature_status = 'unchecked'
+        if signature_present and signature_checked and signature_valid and signature_fingerprint_match:
+            local_signature_status = 'valid'
+        elif signature_present and not signature_checked:
+            # Local HMAC is a second, vault-only proof.  A package can still be
+            # independently valid when the public Ed25519 signature verifies.
+            local_signature_status = 'present_not_checked'
+        elif signature_present:
+            local_signature_status = 'invalid'
             all_valid = False
-        elif not signature_present:
-            all_valid = False
+        else:
+            local_signature_status = 'missing'
 
         result = {
             'valid': all_valid,
             'verified_at': utc_now_iso(),
             'directory': safe_display_path(root),
             'package_hash_valid': package_hash_valid,
+            'public_signature_present': public_signature_present,
+            'public_signature_valid': public_signature_valid,
+            'public_signature_algorithm': manifest.get('public_signature_algorithm', ''),
+            'signing_public_key_fingerprint': expected_public_fingerprint,
+            'public_signature_fingerprint_match': public_signature_fingerprint_match,
+            'local_signature_status': local_signature_status,
             'signature_present': signature_present,
             'signature_checked': signature_checked,
             'signature_valid': signature_valid,

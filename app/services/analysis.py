@@ -116,11 +116,21 @@ class AnalysisServiceMixin:
             gain += 5
             fixes.append('Export a fresh encrypted backup: +5')
         projected = min(100, current + gain)
+        explanation = []
+        if fixes:
+            explanation = [
+                'Selected fixes are scored by deterministic local rules.',
+                'Largest gains come from replacing weak, reused, breached, or old credentials first.',
+                'The estimate is for prioritization only; it is not an exact scientific prediction.',
+            ]
         return {
             'current_score': current if total else None,
             'projected_score': projected if total else None,
             'estimated_gain': projected - current if total else 0,
             'selected_fixes': fixes or ['No measurable score change from selected options.'],
+            'recommended_order': fixes[:],
+            'why_it_matters': explanation,
+            'method': 'Rule-based local estimate for remediation planning.',
         }
 
     def risk_distribution(self, findings: list[dict[str, Any]] | None = None) -> dict[str, int]:

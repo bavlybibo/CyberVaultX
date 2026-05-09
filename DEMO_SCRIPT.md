@@ -24,7 +24,7 @@
 - Show weak, reused, old, and breached/offline-hash findings.
 - Open one finding and explain evidence, impact, and remediation.
 
-## 6. AI Guardian
+## 6. AI-style Local Security Coach
 - Generate the local security plan.
 - Emphasize that the assistant is explainable and redacted: no raw password, note, username, backup blob, or absolute path is included.
 

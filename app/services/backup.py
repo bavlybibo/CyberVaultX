@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -16,9 +17,65 @@ def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
+class BackupImportError(RuntimeError):
+    """Raised when an encrypted backup import must be aborted safely."""
+
+
 class BackupServiceMixin:
     _MAX_BACKUP_ROWS = 10000
     _MAX_FIELD_LENGTH = 20000
+    _MAX_HISTORY_ITEMS_PER_CREDENTIAL = 100
+    _IMPORT_THEME_VALUES = {'Cyan', 'Blue', 'Emerald', 'Purple', 'Amber'}
+
+    def _validated_import_settings(self, settings: dict[str, Any]) -> tuple[dict[str, str], dict[str, str]]:
+        """Return safe settings that may be imported plus rejected reasons.
+
+        Backups can be old or attacker-modified.  Import must never silently
+        disable privacy logging, set unsafe clipboard timing, or push invalid
+        theme/runtime values into app_meta.
+        """
+        clean: dict[str, str] = {}
+        rejected: dict[str, str] = {}
+        if not isinstance(settings, dict):
+            return clean, {'settings': 'Backup settings field is not an object.'}
+
+        def parse_int(key: str, default: int, minimum: int, maximum: int) -> None:
+            if key not in settings:
+                return
+            try:
+                raw = int(str(settings.get(key, default)).strip())
+            except (TypeError, ValueError):
+                rejected[key] = f'invalid integer; expected {minimum}-{maximum}'
+                return
+            clamped = max(minimum, min(maximum, raw))
+            clean[key] = str(clamped)
+            if clamped != raw:
+                rejected[key] = f'clamped from {raw} to {clamped}'
+
+        parse_int('auto_lock_minutes', 3, 1, 60)
+        parse_int('clipboard_clear_seconds', 15, 5, 120)
+
+        if 'theme_accent' in settings:
+            accent = str(settings.get('theme_accent', 'Cyan')).strip() or 'Cyan'
+            if accent in self._IMPORT_THEME_VALUES:
+                clean['theme_accent'] = accent
+            else:
+                clean['theme_accent'] = 'Cyan'
+                rejected['theme_accent'] = f'invalid theme {accent!r}; reset to Cyan'
+
+        if 'privacy_mode_logs' in settings:
+            raw = str(settings.get('privacy_mode_logs', '1')).strip().lower()
+            if raw in {'1', 'true', 'yes', 'on'}:
+                clean['privacy_mode_logs'] = '1'
+            elif raw in {'0', 'false', 'no', 'off'}:
+                # Fail safer: imported backups cannot silently disable privacy logs.
+                clean['privacy_mode_logs'] = '1'
+                rejected['privacy_mode_logs'] = 'backup attempted to disable privacy logs; kept enabled'
+            else:
+                clean['privacy_mode_logs'] = '1'
+                rejected['privacy_mode_logs'] = 'invalid privacy flag; kept enabled'
+
+        return clean, rejected
 
     def _backup_payload(self) -> dict[str, Any]:
         return {
@@ -249,6 +306,7 @@ class BackupServiceMixin:
 
         required = ('title', 'username', 'password', 'category')
         seen_source_ids: set[str] = set()
+        row_source_ids: set[str] = set()
         for idx, row in enumerate(rows, start=1):
             if not isinstance(row, dict):
                 raise ValueError(f'Backup credential row #{idx} must be an object.')
@@ -274,21 +332,33 @@ class BackupServiceMixin:
             source_id = row.get('id')
             if source_id is not None:
                 source_id_text = str(source_id)
+                if len(source_id_text) > 64:
+                    raise ValueError(f'Backup credential row #{idx} source id is too large.')
                 if source_id_text in seen_source_ids:
                     raise ValueError(f'Backup contains duplicate source credential id: {source_id_text}')
                 seen_source_ids.add(source_id_text)
+                row_source_ids.add(source_id_text)
 
         history = data.get('history', {})
         if history is not None and not isinstance(history, dict):
             raise ValueError('Backup history field must be an object.')
         for credential_id, items in (history or {}).items():
+            credential_id_text = str(credential_id)
+            if row_source_ids and credential_id_text not in row_source_ids:
+                raise ValueError(f'Backup history references unknown credential id: {credential_id_text}')
             if not isinstance(items, list):
                 raise ValueError(f'History for credential {credential_id} must be a list.')
+            if len(items) > self._MAX_HISTORY_ITEMS_PER_CREDENTIAL:
+                raise ValueError(f'History for credential {credential_id} contains too many items.')
             for hist_idx, hist in enumerate(items, start=1):
                 if not isinstance(hist, dict) or 'password' not in hist:
                     raise ValueError(f'History item #{hist_idx} for credential {credential_id} is malformed.')
                 if not isinstance(hist.get('password'), str):
                     raise ValueError(f'History item #{hist_idx} for credential {credential_id} password must be text.')
+                if len(hist.get('password', '')) > self._MAX_FIELD_LENGTH:
+                    raise ValueError(f'History item #{hist_idx} for credential {credential_id} password is too large.')
+                if 'changed_at' in hist and len(str(hist.get('changed_at') or '')) > 80:
+                    raise ValueError(f'History item #{hist_idx} for credential {credential_id} changed_at is too large.')
 
         settings = data.get('settings', {})
         if settings is not None and not isinstance(settings, dict):
@@ -368,7 +438,8 @@ class BackupServiceMixin:
                     'reason': reason,
                 })
 
-        settings = data.get('settings', {}) if isinstance(data.get('settings', {}), dict) else {}
+        raw_settings = data.get('settings', {}) if isinstance(data.get('settings', {}), dict) else {}
+        settings, rejected_settings = self._validated_import_settings(raw_settings)
         setting_changes: dict[str, dict[str, str]] = {}
         for key_name in ('auto_lock_minutes', 'clipboard_clear_seconds', 'theme_accent', 'privacy_mode_logs'):
             if key_name in settings:
@@ -396,6 +467,8 @@ class BackupServiceMixin:
             'missing_metadata_rows': missing_metadata_rows,
             'categories': dict(sorted(categories.items(), key=lambda pair: (-pair[1], pair[0]))[:8]),
             'setting_changes': setting_changes,
+            'rejected_settings': rejected_settings,
+            'settings_safety': 'Review' if rejected_settings else 'Safe',
             'recommended_mode': recommendation,
             'diff_summary': {
                 'will_add_on_merge': safe_merge_adds,
@@ -413,6 +486,7 @@ class BackupServiceMixin:
                     f'{duplicate_rows} row(s) already appear to exist in this vault.' if duplicate_rows else '',
                     f'{missing_metadata_rows} row(s) have missing website/tags metadata.' if missing_metadata_rows else '',
                     f'{len(setting_changes)} setting(s) will change if imported.' if setting_changes else '',
+                    f'{len(rejected_settings)} unsafe/invalid setting(s) were clamped or rejected.' if rejected_settings else '',
                 ]
                 if warning
             ],
@@ -428,12 +502,31 @@ class BackupServiceMixin:
         allow_legacy_aad_fallback: bool = False,
     ) -> dict[str, int]:
         key = self.require_key()
+        if allow_legacy_aad_fallback and os.environ.get('CYBERVAULT_LEGACY_BACKUP_MIGRATION') != '1':
+            raise ValueError('Legacy no-AAD backup fallback is disabled in normal import. Use the explicit migration CLI with CYBERVAULT_LEGACY_BACKUP_MIGRATION=1.')
         payload = json.loads(Path(path).read_text(encoding='utf-8'))
         data = decrypt_backup_json(payload, backup_passphrase, allow_legacy_aad_fallback=allow_legacy_aad_fallback)
 
         rows = self._validate_backup_payload(data)
-        if replace_existing:
-            self.create_safety_snapshot('backup import replace_existing', fail_silent=True)
+        # Every import mode can mutate the vault. Create an encrypted rollback
+        # checkpoint before replace, merge, or partial imports.
+        snapshot_reason = 'backup import replace_existing' if replace_existing else 'backup import merge'
+        try:
+            snapshot = self.create_safety_snapshot(snapshot_reason, fail_silent=False)
+        except Exception as exc:
+            self.add_log(
+                'BACKUP_IMPORT_ABORTED_SNAPSHOT_FAILED',
+                'Safety snapshot failed; encrypted backup import was aborted before modifying the vault.',
+                'warning',
+            )
+            raise BackupImportError('Safety snapshot failed; import aborted before modifying the vault.') from exc
+        if snapshot is None:
+            self.add_log(
+                'BACKUP_IMPORT_ABORTED_SNAPSHOT_FAILED',
+                'Safety snapshot returned no checkpoint; encrypted backup import was aborted before modifying the vault.',
+                'warning',
+            )
+            raise BackupImportError('Safety snapshot failed; import aborted before modifying the vault.')
 
         existing_keys = set()
         if not replace_existing:
@@ -445,7 +538,13 @@ class BackupServiceMixin:
         imported = 0
         skipped_duplicates = 0
         history_imported = 0
-        settings = data.get('settings', {})
+        settings, rejected_settings = self._validated_import_settings(data.get('settings', {}) if isinstance(data.get('settings', {}), dict) else {})
+        if rejected_settings:
+            self.add_log(
+                'BACKUP_IMPORT_SETTINGS_CLAMPED',
+                f'Backup import clamped/rejected unsafe settings: {sorted(rejected_settings.keys())}',
+                'warning',
+            )
         now = utc_now_iso()
 
         with self.db.connect() as conn:
@@ -692,347 +791,15 @@ class BackupServiceMixin:
         The dataset is intentionally synthetic and privacy-safe, but it is presented
         as a professional assessment workspace rather than a visible sample set. It
         contains a larger mix of privileged, weak, reused, stale, breached,
-        incomplete, and retired records so the dashboard, Security Center, AI
-        Guardian, Trash workflow, and report builder all have meaningful data.
+        incomplete, and retired records so the dashboard, Security Center, Local Security Coach, Trash workflow, and report builder all have meaningful data.
         """
         existing_keys = {
             (item.title.strip().lower(), item.username.strip().lower(), normalize_site(item.website))
             for item in self.list_credentials(include_deleted=True)
         }
-        samples = [
-            dict(
-                title='GitHub Admin Portal',
-                username='admin@cybervault.local',
-                password='G!tHub#2026_XVault',
-                category='Work',
-                tags='admin,code,privileged,healthy',
-                notes='Privileged source-code account. Keep hardware MFA enabled and restrict recovery methods.',
-                website='github.com',
-                is_favorite=True,
-                age_days=8,
-            ),
-            dict(
-                title='Corporate Mail Gateway',
-                username='mail.owner@corp.example',
-                password='password123',
-                category='Education',
-                tags='breached,weak,email',
-                notes='Mail credential using a weak known pattern. Replace immediately and enforce MFA.',
-                website='mail.corp.example',
-                is_favorite=False,
-                age_days=2,
-            ),
-            dict(
-                title='Cloud Operations Console',
-                username='ops@cloud.example',
-                password='Winter2024!',
-                category='Servers',
-                tags='reused,cloud,operations',
-                notes='Privileged cloud console account. Reuse detection should prioritize this record.',
-                website='cloud.example.com',
-                is_favorite=True,
-                age_days=18,
-            ),
-            dict(
-                title='Brand Social Console',
-                username='social@brand.example',
-                password='Winter2024!',
-                category='Social',
-                tags='reused,marketing,shared-risk',
-                notes='Shared social media management account using the same password as a cloud console.',
-                website='instagram.com',
-                is_favorite=False,
-                age_days=21,
-            ),
-            dict(
-                title='Finance Portal',
-                username='finance@bank.example',
-                password='Tru$tedBank#2026!Qx',
-                category='Banking',
-                tags='finance,mfa,healthy,critical',
-                notes='High-value financial account. Maintain hardware-token MFA and strict recovery controls.',
-                website='bank.example.com',
-                is_favorite=True,
-                age_days=5,
-            ),
-            dict(
-                title='Legacy Mail Archive',
-                username='legacy@mail.example',
-                password='Qwerty2020',
-                category='Email',
-                tags='legacy,stale,weak',
-                notes='Old archive mailbox with a predictable password. Rotate or disable after review.',
-                website='archive-mail.example.com',
-                is_favorite=False,
-                age_days=128,
-            ),
-            dict(
-                title='Threat Simulation Portal',
-                username='bibo_fox',
-                password='Ctf-Lab#2026-BlueTeam',
-                category='Education',
-                tags='lab,portfolio,healthy',
-                notes='Security-lab account with stronger password quality used as a healthy comparison.',
-                website='tryhackme.com',
-                is_favorite=False,
-                age_days=35,
-            ),
-            dict(
-                title='Vendor Procurement Portal',
-                username='vendor@corp.example',
-                password='Vendor2026',
-                category='Shopping',
-                tags='vendor,metadata-needed,medium-risk',
-                notes='Vendor credential missing a verified website field. Complete metadata before report export.',
-                website='',
-                is_favorite=False,
-                age_days=12,
-            ),
-            dict(
-                title='Retired VPN Access',
-                username='vpn.retired@corp.example',
-                password='RetiredVPN2020!',
-                category='Servers',
-                tags='retired,vpn,trash,stale',
-                notes='Retired remote-access credential kept in Trash to prove safe recovery and purge workflow.',
-                website='vpn.old.example.com',
-                is_favorite=False,
-                age_days=160,
-                move_to_trash=True,
-            ),
-            dict(
-                title='HR Payroll Portal',
-                username='hr@corp.example',
-                password='Welcome2024',
-                category='Work',
-                tags='hr,breached,weak,high-impact',
-                notes='Payroll account with a common password pattern. Replace before operational use.',
-                website='payroll.example.com',
-                is_favorite=True,
-                age_days=74,
-            ),
-            dict(
-                title='Microsoft 365 Admin',
-                username='m365.admin@corp.example',
-                password='Company2024!',
-                category='Email',
-                tags='admin,mail,reused,tenant',
-                notes='Tenant administrator account. Reused password risk must be remediated first.',
-                website='admin.microsoft.example',
-                is_favorite=True,
-                age_days=44,
-            ),
-            dict(
-                title='Project Operations Admin',
-                username='jira.admin@corp.example',
-                password='Company2024!',
-                category='Work',
-                tags='admin,projects,reused',
-                notes='Operations admin sharing a password with the Microsoft 365 admin record.',
-                website='jira.example.com',
-                is_favorite=False,
-                age_days=46,
-            ),
-            dict(
-                title='Slack Workspace Owner',
-                username='comms@corp.example',
-                password='Summer2025!',
-                category='Work',
-                tags='workspace,breached,reused,comms',
-                notes='Collaboration workspace owner account with password reuse exposure.',
-                website='slack.com',
-                is_favorite=False,
-                age_days=31,
-            ),
-            dict(
-                title='Docker Hub Registry',
-                username='devops@registry.example',
-                password='Summer2025!',
-                category='Servers',
-                tags='devops,registry,reused,supply-chain',
-                notes='Container registry credential sharing a password with the collaboration workspace.',
-                website='hub.docker.com',
-                is_favorite=False,
-                age_days=34,
-            ),
-            dict(
-                title='DNS Registrar',
-                username='domains@corp.example',
-                password='Dns-Reg!strar#2026-Core',
-                category='Work',
-                tags='dns,critical,healthy',
-                notes='Domain registrar account. Protect with hardware MFA and emergency ownership recovery.',
-                website='registrar.example.com',
-                is_favorite=True,
-                age_days=14,
-            ),
-            dict(
-                title='Stripe Billing Dashboard',
-                username='billing@corp.example',
-                password='Tr0pical$Billing-2026',
-                category='Banking',
-                tags='billing,payments,healthy',
-                notes='Billing console account with acceptable strength. Confirm least-privilege roles.',
-                website='stripe.com',
-                is_favorite=True,
-                age_days=9,
-            ),
-            dict(
-                title='CRM Sales Portal',
-                username='sales@corp.example',
-                password='P@ssw0rd',
-                category='Work',
-                tags='crm,weak,breached,customer-data',
-                notes='Customer-data system using a known weak pattern. Rotate and enforce MFA.',
-                website='crm.example.com',
-                is_favorite=False,
-                age_days=11,
-            ),
-            dict(
-                title='Database Admin Console',
-                username='dba@db.example',
-                password='DbAdmin#2026-Rotate',
-                category='Servers',
-                tags='database,privileged,rotation-due',
-                notes='Database administrator credential. Add break-glass policy and rotation schedule.',
-                website='db-admin.example.com',
-                is_favorite=True,
-                age_days=93,
-            ),
-            dict(
-                title='Backup Management Console',
-                username='backup@corp.example',
-                password='Backup2020!',
-                category='Servers',
-                tags='backup,stale,recovery-risk',
-                notes='Backup console credential is old and high-impact. Rotate after validating recovery procedures.',
-                website='backup.example.com',
-                is_favorite=True,
-                age_days=190,
-            ),
-            dict(
-                title='Wireless Controller',
-                username='netadmin@wlc.local',
-                password='NetOps#2026-WiFi',
-                category='Servers',
-                tags='network,wifi,healthy',
-                notes='Wireless controller account with strong password. Verify admin role separation.',
-                website='wlc.local',
-                is_favorite=False,
-                age_days=22,
-            ),
-            dict(
-                title='Endpoint Security Console',
-                username='security@edr.local',
-                password='EDR-Sentinel#2026',
-                category='Work',
-                tags='security,edr,healthy',
-                notes='Endpoint-security console. Keep emergency access and audit logging enabled.',
-                website='edr.example.com',
-                is_favorite=True,
-                age_days=7,
-            ),
-            dict(
-                title='API Gateway Console',
-                username='api-owner@corp.example',
-                password='Gateway2024!',
-                category='Servers',
-                tags='api,medium-risk,rotation-due',
-                notes='API gateway admin account. Rotate and verify token inventory after password change.',
-                website='gateway.example.com',
-                is_favorite=False,
-                age_days=86,
-            ),
-            dict(
-                title='CI Deployment Service Account',
-                username='svc-ci@corp.example',
-                password='SvcDeploy2023!',
-                category='Servers',
-                tags='service-account,ci,stale',
-                notes='Service account used by deployment workflows. Move to scoped token or managed identity.',
-                website='ci.example.com',
-                is_favorite=False,
-                age_days=155,
-            ),
-            dict(
-                title='Code Signing Portal',
-                username='release@corp.example',
-                password='CodeSign#2026-Critical',
-                category='Work',
-                tags='release,code-signing,critical,healthy',
-                notes='Release-signing account. Treat as critical and require dual-control approval.',
-                website='codesign.example.com',
-                is_favorite=True,
-                age_days=17,
-            ),
-            dict(
-                title='Knowledge Portal Admin',
-                username='knowledge.admin@corp.example',
-                password='Password1',
-                category='Education',
-                tags='knowledge,weak,breached',
-                notes='Knowledge portal account using a known compromised pattern. Replace immediately.',
-                website='knowledge.example.com',
-                is_favorite=False,
-                age_days=28,
-            ),
-            dict(
-                title='eCommerce Merchant Center',
-                username='seller@shop.example',
-                password='Merchant#2026-Live',
-                category='Shopping',
-                tags='merchant,payments,healthy',
-                notes='Merchant account with payment exposure. Confirm alerting and account recovery settings.',
-                website='merchant.example.com',
-                is_favorite=False,
-                age_days=19,
-            ),
-            dict(
-                title='Helpdesk Admin Panel',
-                username='support@corp.example',
-                password='Helpdesk2024!',
-                category='Work',
-                tags='helpdesk,admin,rotation-due',
-                notes='Helpdesk admin account can reset users. Enforce MFA and audit privileged actions.',
-                website='helpdesk.example.com',
-                is_favorite=False,
-                age_days=101,
-            ),
-            dict(
-                title='Personal Portfolio Hosting',
-                username='bibo_fox@portfolio.example',
-                password='BiboPortfolio#2026',
-                category='Personal',
-                tags='portfolio,personal,healthy',
-                notes='Portfolio hosting account with healthy password strength and clear metadata.',
-                website='portfolio.example.com',
-                is_favorite=False,
-                age_days=13,
-            ),
-            dict(
-                title='Red Team Lab Console',
-                username='analyst.redteam@lab.example',
-                password='123456',
-                category='Education',
-                tags='lab,weak,breached,critical-finding',
-                notes='High-risk lab credential used to verify weak-password detection and prioritization.',
-                website='lab.example.com',
-                is_favorite=False,
-                age_days=3,
-            ),
-            dict(
-                title='Old FTP Server',
-                username='ftp.legacy@corp.example',
-                password='FTP2020!',
-                category='Servers',
-                tags='retired,ftp,trash,legacy',
-                notes='Legacy FTP access moved to Trash to demonstrate safer retirement workflow.',
-                website='ftp.legacy.example.com',
-                is_favorite=False,
-                age_days=220,
-                move_to_trash=True,
-            ),
-        ]
+        from ..demo.sample_workspace import assessment_workspace_records
+
+        samples = assessment_workspace_records()
         created_ids: list[int] = []
         skipped_existing = 0
         moved_to_trash = 0
@@ -1078,7 +845,6 @@ class BackupServiceMixin:
             'created': len(created_ids),
             'skipped_existing': skipped_existing,
             'moved_to_trash': moved_to_trash,
-            'total_workspace_items': len(samples),
             'total_workspace_items': len(samples),
             'total_demo_items': len(samples),  # legacy compatibility  # legacy compatibility
             'total_assessment_items': len(samples),

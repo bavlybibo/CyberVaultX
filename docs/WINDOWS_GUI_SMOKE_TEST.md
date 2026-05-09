@@ -21,7 +21,7 @@ dist\CyberVaultX\CyberVaultX.exe
 | Add/Edit/Delete/Restore | Credential lifecycle works without crashes |
 | Reveal/Copy | Requires re-auth; clipboard clears only CyberVault-owned value |
 | Assessment workspace | Curated local assessment workspace loads idempotently |
-| AI Guardian | Explains weak/reused/breached/stale/missing metadata risks |
+| AI-style Local Security Coach | Explains weak/reused/breached/stale/missing metadata risks |
 | Remediation workflow | Progress log updates and safe tag actions work |
 | Backup preview | Shows add/skip/diff summary before modifying vault |
 | Backup import | Merge/Replace works transactionally |
@@ -37,7 +37,7 @@ Capture real Windows screenshots for:
 - Login / Unlock
 - Dashboard
 - Vault
-- AI Guardian
+- AI-style Local Security Coach
 - Security Proof Center v3
 - Backup Restore Preview
 - Report Package Verifier

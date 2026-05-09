@@ -20,7 +20,7 @@ Manual smoke test:
 - Copy password after re-authentication.
 - Update a password and verify history timeline.
 - Reveal/copy an old history password after re-authentication.
-- Generate AI Guardian plan.
+- Generate AI-style Local Security Coach plan.
 - Mark a priority item as fixed.
 - Export privacy-safe report package and inspect `manifest.json`.
 - Import backup with Merge, Replace, and Cancel.

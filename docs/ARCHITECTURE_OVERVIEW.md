@@ -8,7 +8,7 @@ CyberVault X now uses a clearer layered layout while keeping backward-compatible
 - `app/crypto_utils.py` — AES-GCM encryption, PBKDF2 key derivation, backup encryption, and integrity helpers.
 - `app/db.py` — SQLite schema, migrations, metadata, activity log, and low-level storage.
 - `app/manager.py` — vault orchestration layer used by UI and tests.
-- `app/services/` — reporting, backup/restore, AI Guardian, proof/signing, and snapshot workflows.
+- `app/services/` — reporting, backup/restore, AI-style Local Security Coach, proof/signing, and snapshot workflows.
 - `app/ai/` — redacted deterministic recommendation logic.
 - `app/ui*.py` — Tkinter desktop UI pages, visual styling, controllers, dialogs, and refresh logic.
 - `tests/` — unit and workflow tests.

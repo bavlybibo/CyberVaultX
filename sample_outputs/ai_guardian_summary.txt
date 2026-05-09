@@ -1,0 +1,145 @@
+CyberVault Privacy-Safe Local Security Coach Security Plan Summary
+Generated: 2026-05-09T09:40:39+00:00
+Mode: Deterministic Local Security Coach v8 · Site Policy Reasoner + Live Coach UX + Signal Graph + Guided Remediation Workflow + Evidence Guardrails
+Export privacy level: minimal
+Privacy: No raw passwords, master keys, notes, full usernames, database paths, or backup blobs are included. Site reasoning uses only local metadata and inferred account profiles.
+==========================================================
+Executive Summary
+Local Security Coach reviewed 2 active credential(s) and scored the vault at 20/100. The current posture is critical attention required. The top driver is matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category. Average heuristic confidence across priority items is 90%. The plan is generated locally from redacted security signals only; confidence is heuristic policy confidence, not calibrated ML accuracy.
+
+Risk Cards
+- Critical: 2 — Immediate rotation candidates. Treat these like incident-response tasks.
+- High: 0 — Strong assessment value. Fixing these usually improves health score quickly.
+- Moderate: 0 — Cleanup and metadata improvements that reduce future risk.
+- Low: 0 — Healthy or low-noise entries. Keep them monitored during monthly reviews.
+
+Top Priority Items
+1. credential #1 | Critical | Today
+   Why: matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category
+   Primary signal: Breach/Common hit | Heuristic confidence: 98% | Urgency: 99/100
+   Site profile: Work / Business App | Site-fit: 1/100 (Unsafe Fit)
+   Inferred site requirements: Minimum length 16+ characters, Recommended length 22+ characters for Work / Business App, Contains lowercase letters, Contains uppercase letters
+   Exposure path: breach reuse → mailbox/session takeover
+   Evidence: offline breach/common-password signal, score 16/100, site-fit 1/100 for Work / Business App, high-value category: Work, Ends with a year-like suffix
+   Attack scenario: Credential stuffing path: an attacker tests a known/common password against this account and any reused services.
+   Business impact: Potential workspace compromise, lateral movement, mailbox takeover, or operational disruption.
+   Action: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.
+   Expected score gain: +34
+   - Fix step: Generate a unique 20+ character replacement.
+   - Fix step: Update the real service password, then save the new value in CyberVault.
+   - Fix step: Sign out other sessions or revoke trusted devices when the service supports it.
+   - Fix step: Use the Work / Business App profile target instead of a generic password.
+   - Fix step: Check site behavior: SSO/MFA state matters; Connected app review.
+   - Decision trace: Risk tier: Critical
+   - Decision trace: Primary signal: Breach/Common hit
+   - Decision trace: Heuristic confidence: 98%
+   - Decision trace: Urgency score: 99/100
+2. credential #2 | Critical | Today
+   Why: has weak password strength, belongs to a high-value Admin category
+   Primary signal: Weak entropy | Heuristic confidence: 81% | Urgency: 49/100
+   Site profile: Infrastructure / Admin Console | Site-fit: 73/100 (Needs Tune-up)
+   Inferred site requirements: Minimum length 18+ characters, Recommended length 26+ characters for Infrastructure / Admin Console, Contains lowercase letters, Contains uppercase letters
+   Exposure path: weak secret hygiene → account takeover or data exposure
+   Evidence: score 23/100, high-value category: Admin, Short alphabetic or numeric sequence detected, Dictionary token(s) detected: admin, portal, Dictionary word with predictable numeric/symbol suffix detected
+   Attack scenario: Guessing/cracking path: predictable structure lowers the work factor for online guessing or offline cracking after a service breach.
+   Business impact: Lower direct impact, but it still weakens vault hygiene and executive report quality.
+   Action: Generate a stronger 20+ character password and update the real service.
+   Expected score gain: +22
+   - Fix step: Generate a unique 20+ character replacement.
+   - Fix step: Update the real service password, then save the new value in CyberVault.
+   - Fix step: Enable MFA or hardware-key protection where available.
+   - Fix step: Export a fresh privacy-safe report package after remediation.
+   - Decision trace: Risk tier: Critical
+   - Decision trace: Primary signal: Weak entropy
+   - Decision trace: Heuristic confidence: 81%
+   - Decision trace: Urgency score: 49/100
+
+AI Coach UX Snapshot
+- Readiness: Coach should focus on site-fit tuning
+- Overview: 1 credential(s) do not match their inferred site profile. Show users exactly why the account needs stronger handling.
+- First user action: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.
+- Site profile mix: Work / Business App: 1, Infrastructure / Admin Console: 1
+- UX prompt: Use short next-step copy near the password field instead of long raw analysis blocks.
+- UX prompt: Show Length / Mix / Context / Site-fit chips while the user types.
+- UX prompt: Only escalate red states when there is a hard blocker such as breach, reuse, weak entropy, or profile mismatch.
+
+Guided Remediation Workflow
+- Summary: Start with credential #1 because matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category.
+- Next checkpoint: Verify top item: Today · Breach/Common hit · +34 estimated score gain.
+- 1. Triage: READY
+  - Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.
+  - Confirm evidence tags before editing the credential.
+- 2. Containment: CALM
+  - No breach/common hit currently dominates.
+  - Reuse chain is not the main blocker.
+- 3. Hardening: ACTIVE
+  - Replace weak secrets with unique 20+ character generated values.
+  - No old-password wave is required right now.
+- 4. Evidence: ACTIVE
+  - Metadata is ready for privacy-safe reporting.
+  - Regenerate plan and export report package after verification.
+
+Signal Relationship Graph
+- 6 relationship edge(s) mapped. Dominant signal: weak entropy across 2 item(s).
+- Nodes: 8 | Edges: 6
+- Signal: weak_entropy × 2
+- Signal: high_value_category × 2
+- Signal: breach_hit × 1
+- Signal: site_policy_mismatch × 1
+
+Honesty & Limits
+- Deterministic local coach, not cloud AI
+  Claim: Uses local vault metrics, analyzer findings, site-profile heuristics, and redacted identifiers only.
+  Claim: Does not send raw passwords, notes, full usernames, database paths, master keys, or backups to any model.
+  Claim: Ranks remediation using explainable rules; confidence is heuristic policy confidence, not calibrated ML accuracy.
+  Limit: Cannot confirm service-side MFA/session revocation without analyst verification.
+  Limit: Cannot prove external breach status beyond the local/offline breach/common-password dataset available to the app.
+  Limit: Cannot guarantee a website accepted the new password until the user updates and verifies the real service.
+- Review status: Ready for privacy-safe reporting after top fixes are verified.
+
+AI Decision Matrix
+- First fix: Today — matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category
+  Next: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.
+- Heuristic confidence: 98% — offline breach/common-password signal; score 16/100; site-fit 1/100 for Work / Business App
+  Next: Use the evidence tags before exporting a report.
+- Score recovery: Projected — Current score 20/100 with 2 weak, 0 reused, 0 old.
+  Next: Fix top queue items, then regenerate Local Security Coach to compare baseline movement.
+
+Posture Heatmap
+- Breach: Clear (0) — Rotate leaked/common hits first.
+- Reuse: Clear (0) — Break shared passwords across accounts.
+- Weakness: Warm (2) — Increase length and randomness.
+- Age: Clear (0) — Rotate credentials older than policy.
+- Metadata: Clear (0) — Complete site, category, and tags for reporting.
+- Site Fit: Warm (1) — Match password strength to the inferred website/account profile.
+
+Quality Gates
+- Secret redaction: PASS — Priority records use credential refs and masked username hints only.
+- Actionability: PASS — 2 ranked remediation item(s) generated from current telemetry.
+- LLM payload hygiene: REVIEW — Optional payload is designed for future models without raw passwords, master keys, notes, paths, or backup blobs.
+- Evidence coverage: PASS — Each priority item includes confidence, primary signal, evidence tags, and a remediation path.
+
+Action Plan
+Today
+- credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.
+- credential #2: Generate a stronger 20+ character password and update the real service.
+
+This Week
+- Review moderate findings and clean duplicate or incomplete records.
+
+Long-Term
+- Run a monthly vault review and export a fresh encrypted backup after major rotations.
+
+What Changed
+- Baseline captured: current vault health is 20/100.
+- No previous local coach snapshot is stored yet; export a report after fixes to compare future progress.
+
+Fix Impact Simulation
+- Current score: 20/100
+- Projected score after top fixes: 38/100
+- Estimated gain: 18
+- credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.
+- credential #2: Generate a stronger 20+ character password and update the real service.
+
+AI-Style Explanation
+I analyzed the vault locally and found a health score of 20/100 across 2 credential(s). Risk distribution is Critical: 2, High: 0, Moderate: 0, Low: 0. The best first move is: credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA. Fix-impact simulation estimates a move to 38/100 (+18 points) after the top priorities are handled.  No hot posture area dominates right now. What changed: Baseline captured: current vault health is 20/100.. Decision lens: First fix → Today because matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category After that, use the verification questions and remediation playbook so the report shows evidence-bound fixes instead of generic advice.

@@ -6,37 +6,37 @@ from .ui_helpers import normalize_http_url, safe_cache_name, safe_favicon_host
 
 # Centralized dark design tokens.  Keep the legacy names because the UI
 # modules import them directly, but make the palette more layered and readable.
-APP_BG = '#07101D'
-SIDEBAR_BG = '#081224'
-PANEL_BG = '#0D1930'
-CARD_BG = '#10203A'
-CARD_BG_2 = '#162B49'
+APP_BG = '#050A14'
+SIDEBAR_BG = '#060C16'
+PANEL_BG = '#071426'
+CARD_BG = '#0B1B2E'
+CARD_BG_2 = '#102A46'
 SURFACE_1 = CARD_BG
 SURFACE_2 = CARD_BG_2
-SURFACE_3 = '#22436D'
-INPUT_BG = '#091527'
-INPUT_BORDER = '#345784'
-TEXT = '#F8FBFF'
-SUBTEXT = '#C6D7F2'
-MUTED = '#8BA5CF'
-SUCCESS = '#37D39A'
-WARNING = '#FFC857'
-DANGER = '#FF6B84'
-INFO = '#49D5FF'
-SHADOW = '#030812'
-BORDER = '#27456F'
-BORDER_SOFT = '#1C3455'
-PANEL_DEEP = '#060D19'
-GLASS = '#10213A'
-HOVER = '#224670'
-ROW_ALT = '#0C1C30'
+SURFACE_3 = '#163352'
+INPUT_BG = '#06111F'
+INPUT_BORDER = '#1E5C8E'
+TEXT = '#F5FAFF'
+SUBTEXT = '#B8CAE6'
+MUTED = '#7E91AD'
+SUCCESS = '#29F3B2'
+WARNING = '#FFB84D'
+DANGER = '#FF4D72'
+INFO = '#31D8FF'
+SHADOW = '#010511'
+BORDER = '#183C61'
+BORDER_SOFT = '#102B46'
+PANEL_DEEP = '#050C18'
+GLASS = '#0C2138'
+HOVER = '#183F66'
+ROW_ALT = '#0A1A2C'
 
 ACCENTS = {
-    'Cyan': '#42D4FF',
-    'Blue': '#6B8DFF',
-    'Emerald': '#34D399',
-    'Purple': '#A97CFF',
-    'Amber': '#FBBF24',
+    'Cyan': '#31D8FF',
+    'Blue': '#2377FF',
+    'Emerald': '#29F3B2',
+    'Purple': '#A855F7',
+    'Amber': '#FFB84D',
 }
 
 PAGE_COLORS = {
@@ -100,7 +100,7 @@ PAGE_META = {
     'dashboard': ('Dashboard', 'Health score, recommendations, and unlock activity at a glance.'),
     'vault': ('Vault', 'Store, reveal, rotate, and manage encrypted credentials locally.'),
     'security': ('Security Center', 'Review breached, weak, reused, duplicate, and stale credentials.'),
-    'ai_guardian': ('AI Guardian', 'Generate a privacy-preserving smart security plan from local vault telemetry.'),
+    'ai_guardian': ('AI-style Local Security Coach', 'Generate a privacy-preserving smart security plan from local vault telemetry.'),
     'reports': ('Reports', 'Generate executive, privacy-safe, and signed report packages with safe previews.'),
     'backup_recovery': ('Backup / Recovery', 'Create encrypted backups, preview restore impact, and recover safely.'),
     'proof': ('Proof Center', 'Verify encryption posture, audit integrity, and report-package hashes.'),

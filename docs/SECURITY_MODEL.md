@@ -1,27 +1,53 @@
-# Security Model
+# CyberVault X Security Model
 
-CyberVault X is a local-first encrypted password vault.
+CyberVault X is a local password-security assessment prototype. It is designed to demonstrate sound security engineering choices in an academic setting without claiming to be a fully audited commercial password manager.
 
-## Key Derivation
+## Protected Assets
 
-The master password is processed through PBKDF2-SHA256 with a random salt. The derived key is held in memory only while the vault is unlocked. The master password itself is not stored.
+- Stored credential titles, usernames, passwords, notes, categories, tags, and websites.
+- Master-password-derived vault key material.
+- Encrypted backup contents.
+- Report package integrity metadata.
+- Local audit history.
 
-## Encryption
+## Trust Assumptions
 
-Credential fields are encrypted with AES-GCM. Row/field-associated data binds encrypted values to their intended database context, reducing the risk of ciphertext field swaps.
+- The user runs CyberVault X on a trusted local machine.
+- The operating system account is not fully compromised while the vault is unlocked.
+- The user remembers the master password and backup passphrase.
+- Local files may be copied by an attacker, so at-rest encryption and backup encryption matter.
 
-## Authentication Handling
+## Cryptographic Choices
 
-Wrong master-password attempts do not reveal sensitive details. Repeated failures trigger a temporary lockout. Re-authentication checks do not clear an already-unlocked vault key.
+| Control | Current implementation | Notes |
+|---|---|---|
+| Master password KDF | PBKDF2-SHA256 | Course-compatible and portable; Argon2id is stronger future work |
+| Credential field encryption | AES-GCM | Uses authenticated encryption and contextual associated data |
+| Backup encryption | Encrypted backup envelope with KDF metadata | Separate backup passphrase from vault password |
+| Audit integrity | Local hash-chain integrity check | Detects accidental or simple local edits, not a fully trusted external ledger |
+| Report package integrity | Local HMAC manifest signature labeled as local integrity proof | Useful locally; not independently verifiable without the local secret |
 
-## Reports and AI Coach
+## Privacy Controls
 
-Reports and AI outputs are risk summaries. They must not include plaintext passwords, master passwords, derived keys, tokens, full notes, or raw secret material. Privacy-safe reports redact owner, title, username, website, and local paths depending on level.
+- Reports never export plaintext credential passwords.
+- Privacy-safe reports redact owner/vault identity and credential identifiers.
+- Audit export sanitizes local paths under privacy-safe levels.
+- AI-style Local Security Coach uses redacted local telemetry and deterministic rules.
+- Custom breach-list import accepts local SHA1 hashes only and does not upload data.
 
-## Backups
+## What Is Not Protected
 
-Backups are encrypted with a separate passphrase and AES-GCM context. Restore preview and duplicate handling are available before importing into the current vault.
+- Python runtime strings cannot be securely zeroized.
+- A fully compromised machine can observe data while the vault is unlocked.
+- A local attacker who can edit both the database and integrity metadata may be able to recalculate local checks.
+- The bundled breach list is a small offline subset, not a full internet breach service.
+- Local HMAC report signatures are vault-local integrity proofs; report packages also include a public Ed25519 manifest signature for external verification. This proves package integrity, not legal identity attestation.
 
-## Limitations
+## Security Upgrade Hooks
 
-The bundled breach database is an offline subset. It is useful for demo/local detection but does not prove a password is absent from all breaches.
+- Add Argon2id as an optional KDF profile.
+- Add optional certificate-style identity binding for report signing keys.
+- Add stronger OS-specific secret storage for non-vault settings.
+- Add stricter service separation after UI mixins are split.
+
+- Local encryption at rest using AES-GCM protects credential fields before they are stored in SQLite.

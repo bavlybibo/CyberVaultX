@@ -283,3 +283,21 @@
 ### Notes
 - No new heavy UI dependency was added.
 - Core encryption, database, backup, and report logic were not replaced.
+## v5.7.2 Bonus Security Evidence Upgrade
+
+- Added Attack Simulation Lab for safe local defensive proof checks.
+- Added Privacy Export Preview, Password Relationship Graph, and Remediation Planner.
+- Added Generator Plus, Emergency Kit export, and Security Evidence Package export.
+- Integrated bonus actions into the Proof tab UI.
+- Added `tests/test_bonus_features.py` covering all bonus workflows and privacy redaction.
+- Added `docs/BONUS_FEATURES.md` with security honesty and grading evidence notes.
+
+
+## v5.7.2 Core Hardening V9
+
+- Hardened core risk classification with case-insensitive high-value category aliases.
+- Improved password analyzer handling for dictionary-word + predictable suffix patterns.
+- Made leetspeak common-password intelligence consistent with the strength engine.
+- Rebuilt privacy-safe vault risk summaries with reused item counts, critical paths, and priority items.
+- Strengthened encrypted backup payload validation for history references and oversized history entries.
+- Added regression coverage for the new core hardening paths.

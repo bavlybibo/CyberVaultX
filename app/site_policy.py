@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass, field
 from urllib.parse import urlparse
 
 from .analyzer import normalize_site, password_is_old
+from .security_policy import normalize_category_name
 
 
 @dataclass(slots=True)
@@ -193,7 +194,7 @@ def infer_account_policy(*, title: str = '', username: str = '', website: str = 
     for needles, profile in _DOMAIN_PROFILES:
         if any(needle.lower() in hay for needle in needles):
             return _clone(profile)
-    normalized_category = (category or 'General').strip() or 'General'
+    normalized_category = normalize_category_name(category)
     if normalized_category in _CATEGORY_PROFILES:
         return _clone(_CATEGORY_PROFILES[normalized_category])
     return AccountPolicyProfile(
@@ -477,7 +478,7 @@ def build_password_coach_state(
         readiness = 'Unsafe fit'
         mood = 'danger'
         next_action = fit.must_fix[0] if fit.must_fix else 'Generate a fresh password using the site profile target.'
-        microcopy = 'Saving this would create a visible high-risk finding in AI Guardian.'
+        microcopy = 'Saving this would create a visible high-risk finding in the AI-style Local Security Coach.'
 
     context_tokens = _context_tokens(title, username, website)
     lowered = password.lower()

@@ -7,22 +7,15 @@ import os
 import sys
 from pathlib import Path
 
+from app.services.signing import (
+    canonical_manifest_payload,
+    public_key_fingerprint,
+    sign_manifest,
+    verify_manifest_public_signature,
+)
+
 ALLOWED_REPORT_PACKAGE_FILES = {'executive_report.html', 'audit_log.html', 'ai_guardian_summary.txt'}
-
 SIGNING_KEY_ENV = 'CYBERVAULTX_REPORT_SIGNING_KEY'
-
-
-def canonical_manifest_payload(manifest: dict) -> bytes:
-    clone = dict(manifest)
-    clone.pop('manifest_signature', None)
-    clone.pop('signature_algorithm', None)
-    return json.dumps(clone, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode('utf-8')
-
-
-def sign_manifest(manifest: dict, secret: str) -> str:
-    return hmac.new(secret.encode('utf-8'), canonical_manifest_payload(manifest), hashlib.sha256).hexdigest()
-
-
 
 
 def safe_member_path(root: Path, name: str) -> Path:
@@ -111,21 +104,42 @@ def verify_report_package(directory: str | Path) -> int:
     else:
         print(f'[ OK ] package_hash: {actual_package_hash}')
 
+    # Public Ed25519 verification is the main independent proof.  It does not
+    # require the vault-local secret, so a teacher/reviewer can verify the
+    # package from the exported folder alone.
+    public_signature = str(manifest.get('public_manifest_signature', ''))
+    public_key = str(manifest.get('signing_public_key_b64', ''))
+    public_fingerprint = str(manifest.get('signing_public_key_fingerprint', ''))
+    if not public_signature or not public_key:
+        print('[FAIL] public Ed25519 manifest signature missing')
+        ok = False
+    elif verify_manifest_public_signature(manifest):
+        print(f'[ OK ] public_manifest_signature verified; key fingerprint={public_key_fingerprint(public_key)}')
+        if public_fingerprint and not hmac.compare_digest(public_fingerprint, public_key_fingerprint(public_key)):
+            print('[FAIL] public key fingerprint mismatch')
+            ok = False
+    else:
+        print('[FAIL] public Ed25519 manifest signature mismatch')
+        ok = False
+
+    # Local HMAC is a second optional vault-only check.  It can be verified only
+    # when the caller deliberately supplies the vault-local signing key.
     signature = str(manifest.get('manifest_signature', ''))
     signing_key = os.environ.get(SIGNING_KEY_ENV, '')
     if not signature:
-        print('[FAIL] manifest_signature missing')
-        ok = False
+        print('[INFO] local manifest_signature missing; public signature result is authoritative')
     elif signing_key:
         actual_signature = sign_manifest(manifest, signing_key)
         if hmac.compare_digest(signature, actual_signature):
-            print('[ OK ] manifest_signature verified with environment signing key')
+            print('[ OK ] local manifest_signature verified with environment signing key')
         else:
-            print('[FAIL] manifest_signature mismatch with environment signing key')
+            print('[FAIL] local manifest_signature mismatch with environment signing key')
             ok = False
     else:
-        print(f'[INFO] manifest_signature present. Set {SIGNING_KEY_ENV} to verify it outside the app.')
+        print(f'[INFO] local manifest_signature present but not checked. Set {SIGNING_KEY_ENV} to verify it outside the app.')
 
+    payload_hash = hashlib.sha256(canonical_manifest_payload(manifest)).hexdigest()
+    print(f'[INFO] canonical_manifest_payload_sha256: {payload_hash}')
     return 0 if ok else 1
 
 

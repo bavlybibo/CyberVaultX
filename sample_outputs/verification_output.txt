@@ -1,0 +1,7 @@
+[ OK ] executive_report.html: 26886a8f1e1d5fe157451505c8f796b2d275ea41e2ca7bad66a4022caeaf1612
+[ OK ] audit_log.html: 568fd1082ac428afc6d356979f653764b0fb1c0dad4544dea885e853fca288ec
+[ OK ] ai_guardian_summary.txt: 751e21250be926061cb08f566fe1bfbe2ff1a41af9231c3ff42519d6e2cb2109
+[ OK ] package_hash: aab718535df6ee5452457c5db1c479935400b76cbe22971a881b16126a9f3c13
+[ OK ] public_manifest_signature verified; key fingerprint=a3765497db8d2c33
+[INFO] local manifest_signature present but not checked. Set CYBERVAULTX_REPORT_SIGNING_KEY to verify it outside the app.
+[INFO] canonical_manifest_payload_sha256: dc47f4449380785df2320469000509a90f2507202789405646864c7431355488

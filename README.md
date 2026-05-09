@@ -1,289 +1,159 @@
-<div align="center">
+# CyberVault X v5.7.2
 
-# CyberVault X
+CyberVault X is a **commercial-style academic prototype** for local password-security assessment. It stores credentials in an encrypted SQLite vault, analyzes password posture locally, explains risk with a deterministic **Local Security Coach**, exports privacy-safe evidence packages, and verifies local integrity controls without cloud processing.
 
-### Local-First Password Vault & Security Posture Command Center
 
-CyberVault X is a desktop cybersecurity application for storing encrypted credentials, analyzing password risk, generating privacy-safe reports, and guiding users with a deterministic local AI Security Coach.
 
-![Python](https://img.shields.io/badge/Python-3.10%2B-blue)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Desktop-lightgrey)
-![Security](https://img.shields.io/badge/Security-Local--First-success)
-![License](https://img.shields.io/badge/License-MIT-green)
+## Bonus Feature Pack
 
-</div>
+CyberVaultX now includes a bonus-grade security evidence layer:
 
----
+- Security Proof Center for local proof checks and audit-chain validation.
+- Attack Simulation Lab for safe defensive simulations.
+- Privacy Export Preview before report export.
+- Password Relationship Graph for reuse and near-duplicate pattern clusters.
+- Remediation Planner with Today / This Week / Later actions.
+- Generator Plus with profile-aware password/passphrase generation.
+- Emergency Kit with recovery instructions, proof evidence, manifest hashes, and optional encrypted backup.
+- Security Evidence Package exporting proof, attack lab, privacy preview, graph, remediation plan, timeline, backup status, clipboard status, and manifest.
+- Isolated Demo Vault mode that opens synthetic data in a separate local database instead of mutating the real vault.
+- Conservative passphrase model that penalizes famous phrases while avoiding unfair Very Weak results for generated-style multi-word passphrases.
 
-## Overview
+All bonus features are local, deterministic, privacy-aware, and covered by `tests/test_bonus_features.py`. See `docs/BONUS_FEATURES.md` for the detailed feature map and security honesty notes.
 
-**CyberVault X** is built as a local password-security workspace, not a cloud password manager. It combines an encrypted SQLite vault, password-strength analysis, local breach-subset checks, risk scoring, backup/recovery workflows, and exportable security reports in one desktop interface.
+## Feature Matrix
 
-The project is designed for cybersecurity students, security analysts, demo environments, and local-first password posture assessment.
-
----
-
-## Key Features
-
-| Area | What CyberVault X Provides |
-|---|---|
-| **Encrypted Vault** | AES-GCM encrypted credential fields with PBKDF2-SHA256 key derivation. |
-| **Master Password Flow** | Strong password policy checks, safe error messages, and temporary lockout after repeated failures. |
-| **Credential Management** | Add, edit, delete, recover, favorite, search, copy, and reveal credentials through a desktop UI. |
-| **Password Analyzer** | Entropy checks, weak-pattern detection, reuse signals, context leaks, and local breach-subset checks. |
-| **AI Security Coach** | Deterministic local guidance based on vault evidence, not external API calls. |
-| **Reports** | Export HTML, JSON, and text reports with privacy-safe redaction modes. |
-| **Backup & Recovery** | Encrypted backups with separate passphrases, restore preview, duplicate handling, and safety snapshots. |
-| **System Health** | Runtime, crypto, storage, dependency, report-engine, and release-readiness checks. |
-| **Release Tooling** | Preflight checks, cleanup tooling, demo-data generation, and Windows launch scripts. |
-
----
-
-## Screenshots
-
-> Add screenshots inside `assets/screenshots/` and replace these placeholders.
-
-| Dashboard | Vault Workspace |
-|---|---|
-| `assets/screenshots/01_dashboard.png` | `assets/screenshots/02_vault.png` |
-
-| Password Analyzer | AI Security Coach |
-|---|---|
-| `assets/screenshots/03_analyzer.png` | `assets/screenshots/04_ai_security_coach.png` |
-
-| Reports | System Health |
-|---|---|
-| `assets/screenshots/05_reports.png` | `assets/screenshots/06_system_health.png` |
-
----
-
-## Security Model
-
-CyberVault X follows a **local-first security model**:
-
-- The master password is **not stored**.
-- Credential passwords are **not stored in plaintext**.
-- Vault fields are encrypted at rest using **AES-GCM**.
-- Keys are derived using **PBKDF2-SHA256** with a random salt.
-- Reports and AI summaries are designed to avoid leaking plaintext secrets.
-- Backup files use a separate passphrase and integrity checks.
-- The AI Security Coach is deterministic and local; it does not send secrets to an external LLM.
-
-> This project is an academic/product prototype and should not be treated as a formally audited commercial password manager.
-
----
-
-## Project Structure
-
-```text
-CyberVaultX/
-├── app/
-│   ├── ai/              # Local AI coach, findings, recommendations
-│   ├── core/            # Config, constants, models, errors, health checks
-│   ├── crypto/          # Key derivation and vault crypto wrappers
-│   ├── security/        # Password strength, breach checks, risk engine
-│   ├── services/        # Vault, settings, reports, backup, health services
-│   ├── storage/         # SQLite database and repository layer
-│   ├── ui*.py           # Tkinter UI pages, controllers, visuals, dialogs
-│   └── manager.py       # Main orchestration layer
-├── assets/
-│   └── screenshots/     # GitHub/demo screenshots
-├── docs/                # Architecture, usage, reporting, security docs
-├── installer/           # Windows installer template
-├── presentation/        # Project presentation assets
-├── tests/               # Unit and product-hardening tests
-├── tools/               # Preflight, cleanup, demo data, report tools
-├── main.py              # Application entry point
-├── requirements.txt     # Runtime dependencies
-└── README.md
-```
-
----
-
-## Requirements
-
-- Python **3.10+** recommended
-- Windows desktop environment recommended
-- Tkinter support enabled
-- Runtime dependencies from `requirements.txt`
-- Development dependencies from `requirements-dev.txt`
-
-Current core runtime dependencies:
-
-```text
-pycryptodome>=3.20.0
-cryptography>=43.0.0
-```
-
----
+| Capability | Implementation | Verification |
+|---|---|---|
+| Local encrypted vault | SQLite + AES-GCM encrypted credential fields | `app/manager.py`, `app/crypto_utils.py`, `tests/test_crypto.py` |
+| Password posture analysis | Weak, reused, stale, context-based, and offline breach-subset checks | `app/analyzer.py`, `app/services/analysis.py` |
+| Local Security Coach | Rule-based recommendations with evidence, confidence, and next action | `app/ai/`, `app/services/ai_guardian.py` |
+| Security Center | Severity-based findings for Critical/High/Medium/Low triage | `app/ui_pages.py`, `app/ui_refresh.py` |
+| Proof / Trust Center | Local audit hash-chain, backup, report-package, privacy checks, and public Ed25519 manifest signature verification | `app/services/proof.py`, `app/services/product_upgrade.py` |
+| Report Export Wizard | Report type, privacy level, package generation, verification output | `app/services/reporting.py`, `verify_report_package.py` |
+| Backup / Restore | Encrypted backup, restore preview, duplicate handling, rollback snapshot | `app/services/backup.py` |
+| Custom breach subset | Local SHA1 hash-list import with format validation | `app/breach_db.py`, `app/services/product_upgrade.py` |
+| Isolated demo vault | Separate synthetic demo database with visible DEMO VAULT banner | `app/manager.py`, `app/ui_controllers.py`, `tests/test_strong_pass_upgrades.py` |
+| Release quality | Tests, coverage, and release preflight gate | `tests/`, `tools/release_preflight.py` |
 
 ## Quick Start
 
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/<your-username>/<your-repo>.git
-cd <your-repo>
-```
-
-### 2. Create a virtual environment
-
 ```bash
 python -m venv .venv
-```
-
-### 3. Activate the environment
-
-**Windows:**
-
-```bat
 .venv\Scripts\activate
-```
-
-**Linux/macOS:**
-
-```bash
-source .venv/bin/activate
-```
-
-### 4. Install dependencies
-
-```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
-```
-
-### 5. Run the app
-
-```bash
+python -m pip install -r requirements-dev.txt
 python main.py
 ```
 
----
-
-## Windows Shortcuts
-
-The project includes helper scripts for Windows users:
+Windows helper scripts are also included:
 
 ```bat
 setup_windows.bat
 run_windows.bat
 ```
 
-You can also use:
+## Product Workflow
 
-```bat
-run.bat
-```
+1. Create or unlock a local vault.
+2. Add credentials manually or import a CSV using the safe import wizard.
+3. Review the Dashboard Command Center for health score, findings, backup status, audit integrity, and next actions.
+4. Open Security Center to triage findings by severity, confidence, status, and recommended fix.
+5. Review the Local Security Coach for rule-based recommendations and evidence.
+6. Check report readiness before export.
+7. Export a privacy-safe package and verify the manifest output.
+8. Export an encrypted backup and preview restore impact before any restore operation.
+9. Use **Open Isolated Demo Vault** for presentations when sample data is needed; it never inserts demo credentials into the real vault.
 
----
+## Report Outputs
+
+A report package can include:
+
+- `executive_report.html`
+- `audit_log.html`
+- `ai_guardian_summary.txt` internal legacy filename containing the Local Security Coach summary
+- `manifest.json`
+- `verification_output.txt`
+
+Sample exported outputs are available in `sample_outputs/`.
+
+## Security Model Summary
+
+- Master password derives the local vault key through PBKDF2-SHA256.
+- Credential fields are protected using AES-GCM encryption at rest.
+- Reports do not export plaintext passwords or master-password material.
+- Privacy-safe reports redact owner identity, credential titles, usernames, notes, local paths, and raw secrets according to level.
+- Audit logs use a local hash-chain integrity check.
+- Report packages use both a local manifest integrity signature and a public Ed25519 manifest signature. The local HMAC is vault-only; the Ed25519 signature can be checked by the external verifier without the vault secret.
+- All password analysis and breach-subset checks run locally.
+
+See `docs/SECURITY_MODEL.md`, `docs/THREAT_MODEL.md`, and `docs/LIMITATIONS.md`.
 
 ## Testing
 
-Install development dependencies:
-
 ```bash
-python -m pip install -r requirements-dev.txt
-```
-
-Run the test suite:
-
-```bash
-python -m pytest -q
-```
-
-Run release checks:
-
-```bash
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -q
+python -m pytest --cov=app --cov-report=term-missing
 python tools/release_preflight.py
-python tools/project_cleaner.py
+python -m ruff check .
 ```
 
----
+Saved evidence files are in `evidence/` when generated by the release process.
 
-## Reports
+## Project Structure
 
-CyberVault X can export:
+```text
+app/              application code and service layer
+docs/             architecture, security model, grading evidence, walkthrough
+tests/            regression and product-quality tests
+tools/            release preflight and generation helpers
+sample_outputs/   exported report examples
+evidence/         test/preflight/build logs from release checks
+```
 
-- **HTML reports** for polished demo and review use.
-- **JSON reports** for structured validation and tooling.
-- **Text reports** for lightweight summaries.
+## Team Roles
 
-Reports may include vault posture, risk summary, AI coach findings, recommendations, limitations, and integrity metadata. They are designed to avoid exporting plaintext passwords or master secrets.
+| Team Member | Role | Main Areas |
+|---|---|---|
+| Bavly | Product/security lead | Security architecture, vault workflow, reporting, QA |
+| Member 2 | UI/product flow | Dashboard, Security Center, settings polish |
+| Member 3 | Testing/documentation | Test evidence, walkthrough, grading evidence |
 
----
+Update names and ownership before final submission if your team structure differs.
 
-## Demo Workflow
+## Limitations
 
-A clean project demo can follow this path:
+- Python strings cannot be securely zeroized once loaded into runtime memory.
+- PBKDF2-SHA256 is acceptable for course/demo compatibility; Argon2id is stronger future work.
+- The local HMAC manifest signature is not independently verifiable without the local secret, but report packages now also include a public Ed25519 manifest signature for external verification.
+- The bundled offline breach database is a demo-sized subset, not a full internet breach lookup.
+- Tkinter is portable, but it requires careful layout discipline to feel premium.
 
-1. Launch CyberVault X.
-2. Create a new vault with a strong master password.
-3. Add one strong credential and one weak credential.
-4. Review dashboard metrics.
-5. Open Password Analyzer and compare password quality.
-6. Open AI Security Coach and review evidence-based recommendations.
-7. Export a privacy-safe HTML report.
-8. Create an encrypted backup.
-9. Open System Health and confirm release readiness.
+## Future Work
 
----
+- Argon2id migration option.
+- Optional certificate-style identity binding for the Ed25519 public key.
+- More service extraction from the legacy UI mixins.
+- Optional PyQt/PySide interface after core services remain stable.
 
-## Privacy Notes
+## Security Model Summary
+- Local encryption at rest using AES-GCM protects credential fields before they are stored in SQLite.
 
-CyberVault X is designed to keep sensitive data local:
+## v5.7.2 Security Trust Upgrade Notes
 
-- No cloud sync backend is included.
-- No plaintext password export is required for reports.
-- No external AI service is required for the local coach.
-- Demo screenshots should use synthetic credentials only.
-- Real vault databases should never be uploaded publicly.
+This release hardens the project after the zero-mercy audit:
 
----
+- Password scoring now separates raw charset entropy from pattern-adjusted effective entropy.
+- Predictable passwords such as keyboard walks, season/year combinations, dictionary words plus suffixes, context-derived passwords, and weak leetspeak bases are capped below Excellent.
+- The Security Coach is explicitly local deterministic guidance. It does not use an external LLM, does not send secrets to cloud AI, and labels confidence as heuristic policy confidence unless a measured calibration dataset is added.
+- Full reports default away from private export and require explicit acknowledgement plus master-password re-authentication in the UI.
+- Audit export redaction now uses a universal redaction pass for paths, emails, tokens, raw credential values, notes, and domains where required by privacy level.
+- Synthetic assessment credentials were moved out of the production backup service into `app/demo/sample_workspace.py`.
+- Presentation mode no longer inserts demo data into a real vault.
+- Merge backup imports now create encrypted safety snapshots before mutation.
+- Normal backup import no longer accepts legacy no-AAD fallback unless launched through an explicit migration environment gate.
 
-## Known Limitations
+## KDF Roadmap
 
-- The bundled breach database is an offline subset, not a complete global breach source.
-- The UI requires a graphical desktop environment.
-- PDF export is optional and should only be used when the report tooling is installed and verified.
-- The project has not undergone third-party cryptographic or penetration-testing audit.
-- It is not a cloud password manager and does not include account sync.
-
----
-
-## Documentation
-
-Useful project docs:
-
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
-- [`docs/SECURITY_MODEL.md`](docs/SECURITY_MODEL.md)
-- [`docs/USAGE.md`](docs/USAGE.md)
-- [`docs/REPORTING.md`](docs/REPORTING.md)
-- [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md)
-- [`SECURITY.md`](SECURITY.md)
-- [`PRIVACY.md`](PRIVACY.md)
-- [`DISCLAIMER.md`](DISCLAIMER.md)
-
----
-
-## Roadmap
-
-- Improve Windows UI automation coverage.
-- Add optional browser-export import adapters.
-- Add stronger posture trend charts.
-- Add optional hardware-backed key storage support.
-- Expand report templates for executive and technical audiences.
-
----
-
-## License
-
-This project is licensed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
-
----
-
-<div align="center">
-
-**CyberVault X** — Local-first credential protection, password-risk analysis, and privacy-safe security reporting.
-
-</div>
+Current vault metadata uses PBKDF2-SHA256 for course compatibility and broad Windows portability. Future production hardening should add versioned Argon2id metadata and a guided migration flow. PBKDF2 remains acceptable for this academic prototype only when paired with strong master-password policy, high iterations, random salt, and AES-GCM authenticated encryption.

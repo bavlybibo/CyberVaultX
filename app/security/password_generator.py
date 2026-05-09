@@ -44,8 +44,25 @@ def generate_password(
         required_groups.append(_pool(False, False, True, False, easy_read))
     if include_symbols:
         required_groups.append(_pool(False, False, False, True, easy_read))
-    required = [secrets.choice(group) for group in required_groups if group]
-    remaining = [secrets.choice(pool) for _ in range(max(0, length - len(required)))]
-    chars = required + remaining
-    secrets.SystemRandom().shuffle(chars)
-    return "".join(chars)
+    def _candidate() -> str:
+        required = [secrets.choice(group) for group in required_groups if group]
+        remaining = [secrets.choice(pool) for _ in range(max(0, length - len(required)))]
+        chars = required + remaining
+        secrets.SystemRandom().shuffle(chars)
+        return "".join(chars)
+
+    # Avoid rare flaky outputs that accidentally contain sequences, repeated runs,
+    # or dictionary-looking substrings. This keeps the generator aligned with the
+    # analyzer without weakening randomness or logging the generated secret.
+    try:
+        from ..analyzer import analyze_password
+        fallback = _candidate()
+        for _ in range(32):
+            candidate = _candidate()
+            analysis = analyze_password(candidate)
+            if analysis.score >= 85 and not analysis.breached:
+                return candidate
+            fallback = candidate
+        return fallback
+    except Exception:
+        return _candidate()

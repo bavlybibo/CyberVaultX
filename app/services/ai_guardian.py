@@ -48,7 +48,7 @@ class AIGuardianServiceMixin:
     def capture_ai_metrics_baseline(self) -> dict[str, Any]:
         snapshot = self.vault_snapshot()
         self._store_ai_metrics_snapshot(snapshot.metrics)
-        self.add_log('AI Guardian Baseline Captured', 'Captured current vault metrics as the comparison baseline.', 'success')
+        self.add_log('Local Security Coach Baseline Captured', 'Captured current vault metrics as the comparison baseline.', 'success')
         return {'captured_at': self.db.get_meta('ai_last_snapshot_at') or '', 'metrics': dict(snapshot.metrics)}
 
 
@@ -65,26 +65,26 @@ class AIGuardianServiceMixin:
         entry = {
             'completed_at': datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
             'credential_ref': str(credential_ref or 'Selected priority'),
-            'action': str(action or 'Marked AI Guardian recommendation as completed'),
+            'action': str(action or 'Marked Local Security Coach recommendation as completed'),
         }
         log = self.get_ai_remediation_log()
         log.insert(0, entry)
         log = log[:100]
         self.db.set_meta('ai_remediation_log_json', json.dumps(log, ensure_ascii=False, sort_keys=True))
-        self.add_log('AI Remediation Completed', f"Marked {entry['credential_ref']} as fixed in AI Guardian progress tracker.", 'success')
+        self.add_log('AI Remediation Completed', f"Marked {entry['credential_ref']} as fixed in Local Security Coach progress tracker.", 'success')
         self._invalidate_snapshot()
         return {'completed_count': len(log), 'latest': entry}
 
     def clear_ai_remediation_log(self) -> None:
         self.db.set_meta('ai_remediation_log_json', '[]')
-        self.add_log('AI Remediation Progress Cleared', 'Cleared AI Guardian remediation progress tracker.', 'warning')
+        self.add_log('AI Remediation Progress Cleared', 'Cleared Local Security Coach remediation progress tracker.', 'warning')
 
     def export_ai_summary(self, path: str | Path, *, privacy_level: str | None = None) -> Path:
         plan = self.ai_security_plan(persist_snapshot=False)
         dest = Path(path)
         privacy_level = privacy_level or self.get_setting('default_report_privacy_level', 'analyst') or 'analyst'
         privacy_safe = privacy_level != 'full'
-        title = 'CyberVault Privacy-Safe AI Guardian Security Plan Summary' if privacy_safe else f"{self.vault_name} — AI Guardian Security Plan"
+        title = 'CyberVault Privacy-Safe Local Security Coach Security Plan Summary' if privacy_safe else f"{self.vault_name} — Local Security Coach Security Plan"
         lines = [
             title,
             f"Generated: {plan['generated_at']}",
@@ -104,7 +104,7 @@ class AIGuardianServiceMixin:
             for idx, item in enumerate(plan['priority_items'], start=1):
                 lines.append(f"{idx}. {item['credential_ref']} | {item['risk_level']} | {item['timeline']}")
                 lines.append(f"   Why: {item['why']}")
-                lines.append(f"   Primary signal: {item.get('primary_signal', 'n/a')} | Confidence: {item.get('confidence_percent', 0)}% | Urgency: {item.get('urgency_score', 0)}/100")
+                lines.append(f"   Primary signal: {item.get('primary_signal', 'n/a')} | Heuristic confidence: {item.get('confidence_percent', 0)}% | Urgency: {item.get('urgency_score', 0)}/100")
                 lines.append(f"   Site profile: {item.get('site_profile', 'General')} | Site-fit: {item.get('site_fit_score', 'n/a')}/100 ({item.get('site_fit_label', '-')})")
                 if item.get('site_policy_requirements'):
                     lines.append(f"   Inferred site requirements: {', '.join(item.get('site_policy_requirements', [])[:4])}")
@@ -128,6 +128,29 @@ class AIGuardianServiceMixin:
         lines.append(f"- Site profile mix: {coach.get('site_mix', '-')}")
         for prompt in coach.get('ux_prompts', [])[:3]:
             lines.append(f"- UX prompt: {prompt}")
+
+        workflow = plan.get('guided_remediation_workflow', {}) or {}
+        graph = plan.get('signal_relationship_graph', {}) or {}
+        limits = plan.get('honesty_limits', {}) or {}
+        lines.extend(['', 'Guided Remediation Workflow'])
+        lines.append(f"- Summary: {workflow.get('narrative', '-')}")
+        lines.append(f"- Next checkpoint: {workflow.get('next_checkpoint', '-')}")
+        for lane in workflow.get('lanes', []):
+            lines.append(f"- {lane.get('lane', '-')}: {lane.get('status', '-')}")
+            for task in lane.get('tasks', [])[:3]:
+                lines.append(f"  - {task}")
+        lines.extend(['', 'Signal Relationship Graph'])
+        lines.append(f"- {graph.get('narrative', '-')}")
+        lines.append(f"- Nodes: {graph.get('node_count', 0)} | Edges: {graph.get('edge_count', 0)}")
+        for signal in graph.get('top_signals', [])[:5]:
+            lines.append(f"- Signal: {signal.get('signal', '-')} × {signal.get('count', 0)}")
+        lines.extend(['', 'Honesty & Limits'])
+        lines.append(f"- {limits.get('title', 'Deterministic local coach')}")
+        for claim in limits.get('claims', [])[:3]:
+            lines.append(f"  Claim: {claim}")
+        for limit in limits.get('limits', [])[:3]:
+            lines.append(f"  Limit: {limit}")
+        lines.append(f"- Review status: {limits.get('review_status', '-')}")
 
         lines.extend(['', 'AI Decision Matrix'])
         for row in plan.get('decision_matrix', []):
@@ -158,5 +181,5 @@ class AIGuardianServiceMixin:
         lines.extend(f"- {item}" for item in impact.get('top_fixes', []))
         lines.extend(['', 'AI-Style Explanation', plan['ai_style_explanation']])
         atomic_write_text(dest, '\n'.join(lines), encoding='utf-8')
-        self.add_log('AI Summary Exported', f'Exported AI Guardian summary to {safe_display_path(dest)}.')
+        self.add_log('AI Summary Exported', f'Exported Local Security Coach summary to {safe_display_path(dest)}.')
         return dest

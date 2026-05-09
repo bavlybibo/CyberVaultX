@@ -185,14 +185,14 @@ class ControllersMixin:
             return None
         selection = self.ai_priority_tree.selection()
         if not selection:
-            self._set_status('Select an AI Guardian priority item first.', level='warning')
+            self._set_status('Select an Local Security Coach priority item first.', level='warning')
             return None
         values = self.ai_priority_tree.item(selection[0], 'values')
         if not values:
             self._set_status('Selected AI priority is empty.', level='warning')
             return None
         credential_ref = str(values[0])
-        action = str(values[6]) if len(values) > 6 else 'Marked AI Guardian recommendation as completed'
+        action = str(values[6]) if len(values) > 6 else 'Marked Local Security Coach recommendation as completed'
         return credential_ref, action
 
     def mark_ai_priority_fixed(self) -> None:
@@ -209,7 +209,7 @@ class ControllersMixin:
             return
         self.manager.clear_ai_remediation_log()
         self.refresh_all()
-        self._set_status('AI Guardian remediation progress cleared.', level='warning')
+        self._set_status('Local Security Coach remediation progress cleared.', level='warning')
 
     def generate_replacement_for_priority(self) -> None:
         selected = self._selected_ai_priority_values()
@@ -223,21 +223,21 @@ class ControllersMixin:
 
     def generate_ai_security_plan(self) -> None:
         self._refresh_ai_guardian(persist_snapshot=True)
-        self.manager.add_log('AI Guardian Plan Generated', 'Generated local privacy-preserving security plan.', 'success')
-        self._set_status('AI Guardian smart security plan generated locally.', level='success')
+        self.manager.add_log('Local Security Coach Plan Generated', 'Generated local privacy-preserving security plan.', 'success')
+        self._set_status('Local Security Coach smart security plan generated locally.', level='success')
 
     def export_ai_summary(self) -> None:
         path = filedialog.asksaveasfilename(
             parent=self,
             defaultextension='.txt',
-            filetypes=[('AI Guardian summary', '*.txt')],
+            filetypes=[('Local Security Coach summary', '*.txt')],
             initialfile='cybervault_ai_guardian_summary.txt',
         )
         if not path:
             return
         self.manager.export_ai_summary(path)
         self.refresh_all()
-        self._set_status('AI Guardian summary exported.', level='success')
+        self._set_status('Local Security Coach summary exported.', level='success')
 
     def _choose_report_privacy(self, *, privacy_only: bool = False) -> tuple[bool, str] | None:
         result: dict[str, tuple[bool, str] | None] = {'value': None}
@@ -256,7 +256,8 @@ class ControllersMixin:
         ci = card.inner
         self._label(ci, 'Report Export Preview', bg=ci.cget('bg'), font=('Segoe UI Semibold', 14)).pack(anchor='w')
         self._label(ci, 'Choose the report type, privacy level, and confirm exactly what will be included before any file is written.', fg=SUBTEXT, bg=ci.cget('bg'), wraplength=560).pack(anchor='w', pady=(6, 14))
-        choice = tk.StringVar(value='minimal' if privacy_only else self.manager.get_setting('default_report_privacy_level', 'analyst'))
+        choice = tk.StringVar(value='minimal' if privacy_only else self.manager.get_setting('default_report_privacy_level', 'minimal'))
+        full_ack = tk.BooleanVar(value=False)
         options = [] if privacy_only else [('full', 'Full report — owner, titles, usernames, and normal analyst detail')]
         options.extend([
             ('analyst', 'Analyst redacted — masked usernames, useful technical context'),
@@ -298,12 +299,44 @@ class ControllersMixin:
         preview.pack(fill='x', pady=(12, 0))
         self._label(preview, 'Preview', bg=preview.cget('bg'), font=('Segoe UI Semibold', 11)).pack(anchor='w')
         self._label(preview, textvariable=preview_var, fg=SUBTEXT, bg=preview.cget('bg'), wraplength=540, font=('Segoe UI', 9)).pack(anchor='w', pady=(6, 0))
+        ack_box = ttk.Checkbutton(
+            ci,
+            text='I understand that Full report includes owner/title/username/domain identifiers and should stay private.',
+            variable=full_ack,
+        )
+        if not privacy_only:
+            ack_box.pack(anchor='w', pady=(10, 0))
         update_preview()
         btns = tk.Frame(ci, bg=ci.cget('bg'))
         btns.pack(fill='x', pady=(18, 0))
         def accept() -> None:
             value = choice.get()
-            result['value'] = (value != 'full', 'minimal' if value == 'full' else value)
+            if value == 'full':
+                if not full_ack.get():
+                    self._show_toast('Full Report Blocked', 'Confirm the identifier warning before exporting a full report.', kind='warning', parent=dialog)
+                    return
+                password = simpledialog.askstring(
+                    'Re-authenticate for Full Report',
+                    'Enter the master password to confirm this private full report export.',
+                    show='*',
+                    parent=dialog,
+                )
+                try:
+                    reauth_token = self.manager.issue_full_export_reauth_token(password)
+                except Exception:
+                    self._show_toast('Full Report Blocked', 'Re-authentication failed. Use a privacy-safe report or try again.', kind='danger', parent=dialog)
+                    return
+                approved = messagebox.askyesno(
+                    'Final Full Report Warning',
+                    'Full report includes readable identifiers: owner, credential titles, usernames, and domains.\n\nPrivacy-safe minimal report is recommended for sharing. Continue with private full export?',
+                    parent=dialog,
+                )
+                if not approved:
+                    return
+            if value == 'full':
+                result['value'] = (False, 'minimal', reauth_token)
+            else:
+                result['value'] = (True, value, None)
             dialog.destroy()
         ttk.Button(btns, text='Cancel', command=dialog.destroy, style='Ghost.TButton').pack(side='right')
         ttk.Button(btns, text='Continue Export', command=accept, style='Accent.TButton').pack(side='right', padx=(0, 8))
@@ -314,14 +347,21 @@ class ControllersMixin:
         privacy = self._choose_report_privacy()
         if privacy is None:
             return
-        privacy_safe, privacy_level = privacy
+        privacy_safe, privacy_level, reauth_token = privacy
         suffix_name = 'privacy_safe' if privacy_safe else 'executive_security'
         path = filedialog.asksaveasfilename(parent=self, defaultextension='.html', filetypes=[('Executive HTML report', '*.html'), ('JSON report', '*.json'), ('Text report', '*.txt')], initialfile=f'cybervault_{suffix_name}_report.html')
         if not path:
             return
         self._set_status('Exporting report preview selection...', level='info')
         self.update_idletasks()
-        self.manager.export_report(path, privacy_safe=privacy_safe, privacy_level=privacy_level)
+        self.manager.export_report(
+            path,
+            privacy_safe=privacy_safe,
+            privacy_level=privacy_level,
+            full_export_ack=not privacy_safe,
+            reauth_token=reauth_token,
+            warning_version=self.manager.FULL_REPORT_WARNING_VERSION if not privacy_safe else None,
+        )
         self.refresh_all()
         self._set_status(f'Executive security report exported ({"privacy-safe " + privacy_level if privacy_safe else "full"}).', level='success')
 
@@ -329,7 +369,7 @@ class ControllersMixin:
         privacy = self._choose_report_privacy(privacy_only=True)
         if privacy is None:
             return
-        _privacy_safe, privacy_level = privacy
+        _privacy_safe, privacy_level, _reauth_token = privacy
         path = filedialog.asksaveasfilename(parent=self, defaultextension='.html', filetypes=[('Privacy-safe HTML report', '*.html'), ('JSON report', '*.json'), ('Text report', '*.txt')], initialfile=f'cybervault_privacy_safe_{privacy_level}_report.html')
         if not path:
             return
@@ -343,25 +383,41 @@ class ControllersMixin:
         path = filedialog.askopenfilename(parent=self, filetypes=[('CSV files', '*.csv'), ('All files', '*.*')])
         if not path:
             return
-        self._set_status('Reading CSV and opening import wizard...', level='info')
+        max_bytes = 5 * 1024 * 1024
+        max_rows = 5000
+        try:
+            size = Path(path).stat().st_size
+        except OSError as exc:
+            self._show_toast('CSV Import Failed', str(exc), kind='danger')
+            return
+        if size > max_bytes:
+            self._show_toast('CSV Import Blocked', f'CSV is too large for safe UI import ({size:,} bytes). Limit is {max_bytes:,} bytes.', kind='warning')
+            return
+        self._set_status('Reading CSV preview with safety limits...', level='info')
         self.update_idletasks()
         try:
+            rows = []
             with open(path, 'r', encoding='utf-8-sig', newline='') as fh:
                 reader = csv.DictReader(fh)
-                rows = list(reader)
+                fieldnames = list(reader.fieldnames or [])
+                for idx, row in enumerate(reader, start=1):
+                    if idx > max_rows:
+                        self._show_toast('CSV Import Blocked', f'CSV has more than {max_rows:,} rows. Split it before import to keep the UI responsive.', kind='warning')
+                        return
+                    rows.append(row)
         except Exception as exc:
             self._show_toast('CSV Import Failed', str(exc), kind='danger')
             return
-        if not rows or not reader.fieldnames:
+        if not rows or not fieldnames:
             self._show_toast('CSV Import Failed', 'No readable CSV rows were found.', kind='danger')
             return
-        self._open_import_wizard(path, rows, list(reader.fieldnames))
+        self._open_import_wizard(path, rows, fieldnames)
 
     def export_report_package(self) -> None:
         privacy = self._choose_report_privacy(privacy_only=True)
         if privacy is None:
             return
-        _privacy_safe, privacy_level = privacy
+        _privacy_safe, privacy_level, _reauth_token = privacy
         directory = filedialog.askdirectory(parent=self, title='Choose folder for CyberVault report package')
         if not directory:
             return
@@ -369,11 +425,56 @@ class ControllersMixin:
         self.update_idletasks()
         try:
             self.manager.export_report_package(directory, privacy_level=privacy_level)
+            self.manager.set_setting('last_report_package_dir', str(Path(directory)))
         except Exception as exc:
             self._show_toast('Report Package Failed', str(exc), kind='danger')
             return
         self.refresh_all()
         self._set_status('Report package exported with manifest hashes and local manifest signature.', level='success')
+
+    def show_report_readiness(self) -> None:
+        result = self.manager.report_readiness_score(privacy_level=self.report_privacy_default_var.get())
+        warnings = result.get('warnings', [])
+        blockers = result.get('blockers', [])
+        detail = []
+        if blockers:
+            detail.append('Blockers: ' + '; '.join(blockers[:3]))
+        if warnings:
+            detail.append('Warnings: ' + '; '.join(warnings[:3]))
+        if not detail:
+            detail.append('No blocking privacy or verification issues detected.')
+        self.report_readiness_var.set(f"Report Readiness: {result.get('percentage', 0)}% — {result.get('status', 'Unknown')} · {' '.join(detail)}")
+        self._set_status('Report readiness checked.', level='success' if result.get('status') == 'Ready' else 'warning')
+
+    def verify_last_report_package_ui(self) -> None:
+        last_dir = self.manager.get_setting('last_report_package_dir', '')
+        if last_dir and Path(last_dir).exists():
+            directory = last_dir
+        else:
+            directory = filedialog.askdirectory(parent=self, title='Select the last CyberVault report package folder')
+        if not directory:
+            return
+        try:
+            result = self.manager.verify_report_package(directory)
+        except Exception as exc:
+            self._show_toast('Package Verification Failed', str(exc), kind='danger')
+            return
+        self.package_verify_var.set('Report package is valid.' if result.get('valid') else 'Report package needs review.')
+        self.report_artifacts_var.set(f"Verify package: {'VALID' if result.get('valid') else 'REVIEW'} · Files checked: {result.get('files_checked', 0)} · Manifest/signature checks recorded locally.")
+        self.refresh_all()
+        self._set_status('Last report package verification completed.', level='success' if result.get('valid') else 'warning')
+
+    def import_custom_breach_list_ui(self) -> None:
+        path = filedialog.askopenfilename(parent=self, filetypes=[('SHA1 text list', '*.txt'), ('All files', '*.*')])
+        if not path:
+            return
+        try:
+            result = self.manager.import_custom_breach_sha1_list(path, replace=True)
+        except Exception as exc:
+            self._show_toast('Breach List Import Failed', str(exc), kind='danger')
+            return
+        self.refresh_all()
+        self._set_status(f"Imported {result.get('total_custom_hashes', 0)} custom offline SHA1 breach hash(es).", level='success')
 
     def purge_old_activity_logs(self) -> None:
         days = self.manager.get_setting_int('activity_retention_days', 365)
@@ -387,7 +488,7 @@ class ControllersMixin:
         privacy = self._choose_report_privacy(privacy_only=True)
         if privacy is None:
             return
-        _privacy_safe, privacy_level = privacy
+        _privacy_safe, privacy_level, _reauth_token = privacy
         path = filedialog.asksaveasfilename(parent=self, defaultextension='.html', filetypes=[('Audit HTML report', '*.html'), ('Text log', '*.txt')], initialfile=f'cybervault_audit_log_{privacy_level}.html')
         if not path:
             return
@@ -529,6 +630,114 @@ class ControllersMixin:
         if hasattr(self, 'backup_status_panel_var'):
             self.backup_status_panel_var.set(f"Preview ready: {preview.get('total_rows', 0)} row(s), recommended {preview.get('recommended_mode', 'merge')} restore mode.")
         self._set_status('Backup restore preview generated without changing the vault.', level='success')
+
+
+    def _format_json_for_panel(self, title: str, payload: dict | list) -> str:
+        return title + "\n" + "=" * len(title) + "\n" + json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True, default=str)
+
+    def run_attack_simulation_lab_ui(self) -> None:
+        try:
+            result = self.manager.attack_simulation_lab()
+        except Exception as exc:
+            self._show_toast('Attack Lab Failed', str(exc), kind='danger')
+            return
+        lines = [
+            f"Generated: {result.get('generated_at', '-')}",
+            f"Mode: {result.get('mode', '-')}",
+            f"Overall: {result.get('overall_status', 'REVIEW')} ({result.get('passed', 0)}/{result.get('total', 0)} passed)",
+            '',
+            'Simulations',
+        ]
+        for item in result.get('simulations', []):
+            lines.append(f"[{item.get('result', 'REVIEW')}] {item.get('name', '-')}")
+            lines.append(f"  Control: {item.get('control', '-')}")
+            lines.append(f"  Evidence: {item.get('evidence', '-')}")
+        if result.get('limitations'):
+            lines.append('')
+            lines.append('Limitations')
+            lines.extend(f"• {item}" for item in result.get('limitations', []))
+        self.proof_status_var.set(f"Attack Lab: {result.get('overall_status', 'REVIEW')} — {result.get('passed', 0)}/{result.get('total', 0)} simulations passed.")
+        if hasattr(self, 'proof_text'):
+            self._set_text(self.proof_text, '\n'.join(lines))
+        self._set_status('Attack Simulation Lab completed.', level='success' if result.get('overall_status') == 'PASS' else 'warning')
+
+    def show_privacy_preview_ui(self) -> None:
+        try:
+            payload = self.manager.privacy_export_preview(privacy_level='minimal')
+        except Exception as exc:
+            self._show_toast('Privacy Preview Failed', str(exc), kind='danger')
+            return
+        if hasattr(self, 'backup_preview_text_proof'):
+            self._set_text(self.backup_preview_text_proof, self._format_json_for_panel('Privacy Export Preview', payload))
+        self.backup_preview_var.set(f"Privacy preview: {payload.get('privacy_scan_status', 'REVIEW')} — default recommendation: minimal privacy-safe export.")
+        self._set_status('Privacy export preview generated.', level='success' if payload.get('privacy_scan_status') == 'PASS' else 'warning')
+
+    def show_relationship_graph_ui(self) -> None:
+        try:
+            graph = self.manager.password_relationship_graph()
+        except Exception as exc:
+            self._show_toast('Relationship Graph Failed', str(exc), kind='danger')
+            return
+        if hasattr(self, 'backup_preview_text_proof'):
+            self._set_text(self.backup_preview_text_proof, self._format_json_for_panel('Password Relationship Graph', graph))
+        self.backup_preview_var.set(f"Relationship graph: {graph.get('node_count', 0)} node(s), {graph.get('cluster_count', 0)} cluster(s).")
+        self._set_status('Privacy-preserving relationship graph generated.', level='success')
+
+    def show_remediation_planner_ui(self) -> None:
+        try:
+            plan = self.manager.remediation_planner()
+        except Exception as exc:
+            self._show_toast('Remediation Planner Failed', str(exc), kind='danger')
+            return
+        if hasattr(self, 'backup_preview_text_proof'):
+            self._set_text(self.backup_preview_text_proof, self._format_json_for_panel('Remediation Planner', plan))
+        summary = plan.get('summary', {})
+        self.backup_preview_var.set(f"Remediation plan: {summary.get('today_count', 0)} urgent item(s), {summary.get('this_week_count', 0)} this-week item(s).")
+        self._set_status('Remediation planner generated without changing credentials.', level='success')
+
+    def export_security_evidence_package_ui(self) -> None:
+        directory = filedialog.askdirectory(parent=self, title='Choose folder for CyberVault security evidence package')
+        if not directory:
+            return
+        try:
+            path = self.manager.export_security_evidence_package(directory)
+        except Exception as exc:
+            self._show_toast('Evidence Package Failed', str(exc), kind='danger')
+            return
+        self.package_verify_var.set(f'Security evidence package exported to {Path(path).name}.')
+        if hasattr(self, 'package_verify_text'):
+            manifest = Path(path) / 'manifest.json'
+            rendered = manifest.read_text(encoding='utf-8', errors='ignore') if manifest.exists() else '{}'
+            self._set_text(self.package_verify_text, 'Security Evidence Package Manifest\n==================================\n' + rendered)
+        self.refresh_all()
+        self._set_status('Security evidence package exported with manifest hashes.', level='success')
+
+    def export_emergency_kit_ui(self) -> None:
+        directory = filedialog.askdirectory(parent=self, title='Choose folder for CyberVault emergency kit')
+        if not directory:
+            return
+        include_backup = messagebox.askyesno(
+            'Emergency Kit Backup',
+            'Include an encrypted vault backup in the kit?\n\nDo not store the backup passphrase inside the kit.',
+            parent=self,
+        )
+        passphrase = None
+        if include_backup:
+            passphrase = simpledialog.askstring('Backup Passphrase', 'Create a strong backup passphrase for the emergency kit:', parent=self, show='*')
+            if not passphrase:
+                return
+        try:
+            path = self.manager.create_emergency_kit(directory, backup_passphrase=passphrase)
+        except Exception as exc:
+            self._show_toast('Emergency Kit Failed', str(exc), kind='danger')
+            return
+        self.package_verify_var.set(f'Emergency kit exported to {Path(path).name}.')
+        if hasattr(self, 'package_verify_text'):
+            manifest = Path(path) / 'manifest.json'
+            rendered = manifest.read_text(encoding='utf-8', errors='ignore') if manifest.exists() else '{}'
+            self._set_text(self.package_verify_text, 'Emergency Kit Manifest\n======================\n' + rendered)
+        self.refresh_all()
+        self._set_status('Emergency kit exported without storing any passphrase in the kit.', level='success')
 
     def export_backup(self) -> None:
         path = filedialog.asksaveasfilename(parent=self, defaultextension='.cvxbackup', filetypes=[('CyberVault Backup', '*.cvxbackup')], initialfile='cybervault_backup.cvxbackup')
@@ -691,20 +900,69 @@ class ControllersMixin:
         ttk.Button(btns, text='Cancel', command=dialog.destroy, style='Ghost.TButton').pack(side='right')
         ttk.Button(btns, text='Restore Selected Snapshot', command=do_restore, style='Danger.TButton').pack(side='right', padx=(0, 8))
 
+    def open_isolated_demo_vault(self) -> None:
+        if getattr(self, 'demo_mode_active', False):
+            self._set_status('Already inside isolated demo vault.', level='info')
+            return
+        approved = messagebox.askyesno(
+            'Open Isolated Demo Vault',
+            'This opens a separate synthetic DEMO VAULT in its own local database.\n\n'
+            'Your current real vault will not receive sample credentials. You can exit back to the real vault from Workspace Operations.',
+            parent=self,
+        )
+        if not approved:
+            self._set_status('Isolated demo vault cancelled.', level='info')
+            return
+        try:
+            demo_dir = self.db_path.parent / 'demo_vaults'
+            demo_manager, stats = self.manager.create_isolated_demo_vault(demo_dir)
+        except Exception as exc:
+            self._show_toast('Demo Vault Failed', str(exc), kind='danger')
+            self._set_status(f'Isolated demo vault failed: {exc}', level='danger')
+            return
+        self.real_manager = self.manager
+        self.demo_manager = demo_manager
+        self.manager = demo_manager
+        self.demo_mode_active = True
+        self.selected_id = None
+        self.selected_trash_id = None
+        self.refresh_all()
+        message = f"DEMO VAULT — synthetic data only. {stats.get('created', 0)} item(s) loaded in isolated database."
+        self._set_status(message, level='warning')
+        self._show_toast('Isolated Demo Vault', message, kind='warning')
+
+    def exit_demo_vault(self) -> None:
+        if not getattr(self, 'demo_mode_active', False):
+            self._set_status('No isolated demo vault is currently active.', level='info')
+            return
+        try:
+            if getattr(self, 'demo_manager', None) is not None:
+                self.demo_manager.db.close()
+        except Exception:
+            pass
+        self.manager = self.real_manager
+        self.demo_manager = None
+        self.demo_mode_active = False
+        self.selected_id = None
+        self.selected_trash_id = None
+        self.refresh_all()
+        self._set_status('Exited isolated demo vault. Real vault restored.', level='success')
+        self._show_toast('Demo Vault Closed', 'Real vault restored. Demo credentials were never inserted into it.', kind='success')
+
     def load_demo_data(self) -> None:
         existing_count = len(self.manager.list_credentials(include_deleted=True))
-        if existing_count:
-            approved = messagebox.askyesno(
-                'Create Assessment Workspace',
-                'CyberVault will create a curated local assessment workspace inside the vault.\n\n'
-                'Existing credentials will stay untouched, exact assessment duplicates are skipped, '
-                'and retired credentials are moved to Trash so recovery and purge controls can be reviewed. Continue?',
-                parent=self,
-            )
-            if not approved:
-                self._set_status('Assessment workspace setup cancelled.', level='info')
-                return
-        stats = self.manager.load_demo_data()
+        approved = messagebox.askyesno(
+            'Open Demo Assessment Workspace',
+            'This action loads clearly synthetic DEMO DATA into the currently unlocked vault.\n\n'
+            'It is isolated from exports by privacy-safe redaction rules, but it is still sample data and should not be mixed with a real password vault unless you explicitly approve.\n\n'
+            f'Current vault contains {existing_count} credential(s). Existing credentials stay untouched and exact duplicates are skipped. Continue?',
+            parent=self,
+        )
+        if not approved:
+            self._set_status('Demo assessment workspace setup cancelled.', level='info')
+            return
+        self.demo_data_loaded = True
+        stats = self.manager.create_assessment_workspace()
         select_id = None
         created_ids = stats.get('created_ids', []) if isinstance(stats, dict) else []
         if created_ids:
@@ -897,8 +1155,17 @@ class ControllersMixin:
                 self._set_status('Clipboard cleared.', level='info', toast=False)
             elif expected is not None:
                 self._set_status('Clipboard changed externally; CyberVault left it unchanged.', level='info', toast=False)
-        except Exception:
-            pass
+        except Exception as exc:
+            warning = f'Clipboard clear failed: {exc}. Manually clear the clipboard now.'
+            try:
+                self.manager.add_log('Clipboard Clear Failed', warning, 'warning')
+            except Exception:
+                pass
+            try:
+                self._set_status(warning, level='warning')
+                self._show_toast('Clipboard Warning', 'CyberVault could not confirm clipboard clearing. Clear it manually.', kind='warning')
+            except Exception:
+                pass
         self._clipboard_owned_value = None
         self.clipboard_job = None
 
@@ -1155,11 +1422,14 @@ class ControllersMixin:
             self.attributes('-fullscreen', self.presentation_mode)
         except Exception:
             pass
-        if self.presentation_mode and not self.manager.list_credentials():
-            self.manager.load_demo_data()
-            self.refresh_all()
+        # Full-screen/presentation mode must never mutate a real vault.
+        # Synthetic assessment data is loaded only through the explicit
+        # load_demo_data() action and confirmation dialog.
         self.show_view('dashboard')
-        self._set_status('Full-screen focus mode enabled.' if self.presentation_mode else 'Full-screen focus mode disabled.', level='info')
+        self._set_status(
+            'Full-screen focus mode enabled. Demo data was not added to this vault.' if self.presentation_mode else 'Full-screen focus mode disabled.',
+            level='info',
+        )
 
     def update_fix_simulator(self) -> None:
         options = {
@@ -1242,7 +1512,7 @@ class ControllersMixin:
         if hasattr(self, 'length_label'):
             self.length_label.configure(text=f'{self.generator_length_var.get()} characters')
 
-        length = max(8, min(64, self.generator_length_var.get()))
+        length = max(12, min(64, self.generator_length_var.get()))
         pools = []
         if self.generator_upper_var.get():
             pools.append(string.ascii_uppercase)
@@ -1288,7 +1558,9 @@ class ControllersMixin:
         if hasattr(self, 'generator_analysis_vars'):
             self.generator_analysis_vars['score'].set(f'{analysis.score}/100 · {analysis.label}')
             self.generator_analysis_vars['entropy'].set(f'{analysis.entropy_bits} bits')
-            self.generator_analysis_vars['fit'].set(use_case)
+            self.generator_analysis_vars['fit'].set(f'{use_case} · {fit.fit_label}')
+            if 'crack' in self.generator_analysis_vars:
+                self.generator_analysis_vars['crack'].set('45K+ years' if analysis.score >= 90 else 'Review risk')
             if 'profile' in self.generator_analysis_vars:
                 self.generator_analysis_vars['profile'].set(fit.profile)
         warning_lines = [f'• {w}' for w in analysis.warnings] or ['• No major generator warnings.']
@@ -1324,6 +1596,8 @@ class ControllersMixin:
         self._set_text(self.generator_analysis, '\n'.join(lines))
         self.generator_meter_var.set(f'{fit_note} Copy it or send it into the editor to replace a risky credential.')
         self._draw_generator_meter(analysis.score, analysis.entropy_bits)
+        if hasattr(self, '_draw_generator_composition'):
+            self._draw_generator_composition(password)
 
     def use_generated_password(self) -> None:
         if self.generated_password_var.get():
@@ -1427,7 +1701,7 @@ class ControllersMixin:
         if hasattr(self, 'live_coach_action_var'):
             self.live_coach_action_var.set(f"Next best action: {coach.get('next_action', 'Generate or save when ready.')}")
         self.site_policy_var.set(
-            f"Site profile: {coach.get('profile', fit_data.get('profile', 'General'))} · Risk tier: {coach.get('risk_tier', fit_data.get('risk_tier', 'Low'))} · Confidence: {fit_data.get('confidence', 0)}%"
+            f"Site profile: {coach.get('profile', fit_data.get('profile', 'General'))} · Risk tier: {coach.get('risk_tier', fit_data.get('risk_tier', 'Low'))} · Heuristic confidence: {fit_data.get('confidence', 0)}%"
         )
         self.site_policy_detail_var.set(coach.get('microcopy', fit_data.get('site_reason', '')))
         self._draw_live_coach_meter(fit_score, fit_label)

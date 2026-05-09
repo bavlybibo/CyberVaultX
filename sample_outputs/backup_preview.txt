@@ -1,0 +1,49 @@
+{
+  "active_rows": 2,
+  "categories": {
+    "Admin": 1,
+    "Work": 1
+  },
+  "deleted_rows": 0,
+  "diff_preview": [
+    {
+      "action": "Skip",
+      "item": "Sample Admin Portal",
+      "reason": "Same title + username + normalized website exists in current vault.",
+      "row": "1"
+    },
+    {
+      "action": "Skip",
+      "item": "Sample Work Account",
+      "reason": "Same title + username + normalized website exists in current vault.",
+      "row": "2"
+    }
+  ],
+  "diff_summary": {
+    "risk": "Safe",
+    "will_add_on_merge": 0,
+    "will_move_to_trash_on_merge": 0,
+    "will_replace_current_rows_on_replace": 2,
+    "will_skip_duplicates_on_merge": 2,
+    "will_update_on_merge": 0
+  },
+  "duplicates_in_current_vault": 2,
+  "exported_at": "2026-05-09T09:40:39+00:00",
+  "format": "CyberVaultBackup/v3",
+  "high_value_rows": 1,
+  "merge_would_add": 0,
+  "missing_metadata_rows": 0,
+  "owner_name_present": true,
+  "path": "sample.cvxbackup",
+  "recommended_mode": "replace",
+  "rejected_settings": {},
+  "replace_would_remove_current": 2,
+  "setting_changes": {},
+  "settings_safety": "Safe",
+  "total_rows": 2,
+  "vault_name_present": true,
+  "warnings": [
+    "Replace mode deletes current credentials after creating a safety snapshot.",
+    "2 row(s) already appear to exist in this vault."
+  ]
+}

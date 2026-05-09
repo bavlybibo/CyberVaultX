@@ -16,9 +16,9 @@ Use the Vault page to add credentials. Passwords are hidden by default. Copy/rev
 
 Use Password Analyzer to test strength, entropy, patterns, context fit, and local breach-subset status. Warnings are evidence-based and avoid exaggerated severity.
 
-## AI Security Coach
+## AI-style Deterministic Security Coach
 
-Open AI Security Coach after adding credentials. Findings show severity, confidence, evidence, why it matters, and a recommended action.
+Open AI-style Deterministic Security Coach after adding credentials. Findings show severity, confidence, evidence, why it matters, and a recommended action.
 
 ## Reports
 

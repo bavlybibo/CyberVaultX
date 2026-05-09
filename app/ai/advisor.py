@@ -4,7 +4,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from typing import Any
 
-from ..security_policy import CRITICAL_CATEGORIES, mask_identifier
+from ..security_policy import CRITICAL_CATEGORIES, is_high_value_category, mask_identifier
 from .insights import build_change_summary, simulate_fix_impact
 
 RISK_LEVELS = ('Critical', 'High', 'Moderate', 'Low')
@@ -85,7 +85,7 @@ def _signal_flags(item: dict[str, Any]) -> dict[str, bool]:
         'weak_entropy': score < 60 or 'entropy' in text or 'too short' in text or 'predictable' in text,
         'site_policy_mismatch': int(item.get('site_fit_score', 100) or 100) < 70 or 'below inferred site-policy fit' in text,
         'stale_secret': bool(item.get('old_password')) or 'older than 90 days' in text,
-        'high_value_category': str(item.get('category', 'General')) in CRITICAL_CATEGORIES,
+        'high_value_category': is_high_value_category(str(item.get('category', 'General'))),
         'metadata_gap': 'missing website' in text or 'missing tags' in text,
         'duplicate_identity': 'duplicate site' in text or 'username appears' in text,
     }
@@ -182,7 +182,7 @@ def _priority_score(item: dict[str, Any]) -> int:
         value += 28
     if int(item.get('site_fit_score', 100) or 100) < 70:
         value += 34
-    if str(item.get('category', 'General')) in CRITICAL_CATEGORIES:
+    if is_high_value_category(str(item.get('category', 'General'))):
         value += 45
     value += min(48, len(issues) * 8)
     value += _signal_score(item)
@@ -234,7 +234,7 @@ def _attack_scenario_for(item: dict[str, Any]) -> str:
         return f"Site-fit path: this password does not meet the local {item.get('site_profile', 'account')} expectation, leaving a high-value account under-protected."
     if flags['stale_secret']:
         return 'Dormant exposure path: old passwords are more likely to exist in browser exports, screenshots, old devices, or previous leaks.'
-    if category in CRITICAL_CATEGORIES:
+    if is_high_value_category(category):
         return 'High-value account path: small hygiene issues can become larger business, mailbox, infrastructure, or finance impact.'
     return 'Low-noise hygiene path: cleanup improves future search, reporting quality, and audit confidence.'
 
@@ -322,12 +322,12 @@ def _decision_trace_for(item: dict[str, Any]) -> list[str]:
     trace = [
         f"Risk tier: {item.get('risk_level', 'Low')}",
         f"Primary signal: {_primary_signal_for(item)}",
-        f"Evidence confidence: {_evidence_confidence_for(item)}%",
+        f"Heuristic confidence: {_evidence_confidence_for(item)}%",
         f"Urgency score: {_signal_score(item)}/100",
     ]
     if int(item.get('site_fit_score', 100) or 100) < 70:
         trace.append(f"Site-fit score {item.get('site_fit_score')}/100 for {item.get('site_profile', 'General')} raised the priority.")
-    if str(item.get('category', 'General')) in CRITICAL_CATEGORIES:
+    if is_high_value_category(str(item.get('category', 'General'))):
         trace.append('High-value category raised the priority.')
     if int(item.get('reuse_count', 0) or 0) > 1:
         trace.append(f"Reuse count {item.get('reuse_count')} means one compromise can fan out.")
@@ -372,6 +372,135 @@ def _risk_cards(counts: dict[str, int]) -> dict[str, dict[str, str | int]]:
     }
 
 
+
+def _confidence_band(percent: int) -> str:
+    percent = _clamp(percent)
+    if percent >= 90:
+        return 'Very High / evidence-rich'
+    if percent >= 75:
+        return 'High / enough local evidence'
+    if percent >= 60:
+        return 'Medium / verify before report'
+    return 'Low / needs analyst review'
+
+
+def _risk_interlocks_for(item: dict[str, Any]) -> list[str]:
+    """Explain combinations of signals that make one finding more important.
+
+    This gives the coach a stronger reasoning layer than a simple sorted list:
+    breached + reused is worse than either signal alone, and a weak secret on a
+    high-value account should be presented differently from a weak throwaway
+    account.  All inputs are already redacted local telemetry.
+    """
+    flags = _signal_flags(item)
+    interlocks: list[str] = []
+    if flags['breach_hit'] and flags['reuse_chain']:
+        interlocks.append('Breach/common hit + reuse chain: rotate every linked account, not only this record.')
+    if flags['weak_entropy'] and flags['high_value_category']:
+        interlocks.append('Weak entropy + high-value category: treat as elevated takeover risk.')
+    if flags['stale_secret'] and (flags['breach_hit'] or flags['reuse_chain']):
+        interlocks.append('Old secret + exposure signal: assume the password may exist in older exports or leaks.')
+    if flags.get('site_policy_mismatch') and flags['high_value_category']:
+        interlocks.append('Site-fit mismatch + sensitive account type: generic password guidance is not enough.')
+    if flags['metadata_gap'] and (flags['breach_hit'] or flags['reuse_chain']):
+        interlocks.append('Metadata gap + exposure signal: complete website/category before exporting evidence.')
+    return interlocks or ['No multi-signal collision detected; handle through normal hygiene workflow.']
+
+
+def _control_gaps_for(item: dict[str, Any]) -> list[str]:
+    flags = _signal_flags(item)
+    gaps: list[str] = []
+    if flags['breach_hit'] or flags['reuse_chain']:
+        gaps.append('Session revocation/MFA status must be checked outside the vault.')
+    if flags['weak_entropy']:
+        gaps.append('Password policy target is not satisfied by the current secret.')
+    if flags.get('site_policy_mismatch'):
+        gaps.append('Site-specific strength expectation is not met.')
+    if flags['stale_secret']:
+        gaps.append('Rotation evidence is missing or outdated.')
+    if flags['metadata_gap']:
+        gaps.append('Report-quality metadata is incomplete.')
+    if flags['duplicate_identity']:
+        gaps.append('Duplicate identity/site record needs analyst cleanup.')
+    return gaps or ['No major control gap detected from local telemetry.']
+
+
+def _verification_questions_for(item: dict[str, Any]) -> list[str]:
+    flags = _signal_flags(item)
+    questions: list[str] = []
+    if flags['breach_hit']:
+        questions.append('Was this password changed on the real service after the breach/common-password hit?')
+    if flags['reuse_chain']:
+        questions.append('Which other accounts share this password and must be rotated in the same wave?')
+    if flags['high_value_category']:
+        questions.append('Is MFA enabled for this high-value account?')
+    if flags['stale_secret']:
+        questions.append('Can the user confirm the last real service-side password rotation date?')
+    if flags.get('site_policy_mismatch'):
+        questions.append('Does the generated replacement satisfy the inferred site profile and form constraints?')
+    if flags['metadata_gap']:
+        questions.append('Are website, category, and tags complete enough for a privacy-safe report?')
+    return questions[:5] or ['Is this entry still active and worth keeping in the vault?']
+
+
+def _remediation_playbook_for(item: dict[str, Any]) -> dict[str, list[str]]:
+    fix_path = _fix_path_for(item)
+    flags = _signal_flags(item)
+    verify: list[str] = []
+    after: list[str] = []
+    if flags['breach_hit'] or flags['reuse_chain']:
+        verify.append('Confirm sign-out/revoke-session option on the real service if available.')
+        verify.append('Search the vault for the same password/reuse group before closing the task.')
+    if flags['high_value_category']:
+        verify.append('Confirm MFA/recovery codes are enabled and stored safely.')
+    if flags.get('site_policy_mismatch'):
+        verify.append('Re-run analyzer and site-fit check after saving the replacement.')
+    if flags['metadata_gap'] or flags['duplicate_identity']:
+        verify.append('Confirm metadata cleanup appears correctly in Reports and Security Center.')
+    after.append('Regenerate Local Security Coach plan and compare projected score movement.')
+    after.append('Export a privacy-safe report package only after top fixes are verified.')
+    return {
+        'do_now': fix_path[:4],
+        'verify': verify[:4] or ['Re-run the analyzer and confirm the finding is reduced or removed.'],
+        'aftercare': after,
+    }
+
+
+def _build_risk_fusion_summary(metrics: dict[str, Any], priority_items: list[dict[str, Any]]) -> dict[str, Any]:
+    total = int(metrics.get('total', 0) or 0)
+    collisions = sum(1 for item in priority_items if len([flag for flag in _signal_flags(item).values() if flag]) >= 2)
+    avg_conf = round(sum(int(item.get('confidence_percent', 0) or 0) for item in priority_items) / max(1, len(priority_items))) if priority_items else 0
+    first = priority_items[0] if priority_items else {}
+    if not total:
+        narrative = 'No vault telemetry yet. The coach cannot build a meaningful evidence graph without credentials.'
+    elif priority_items:
+        narrative = f"{len(priority_items)} ranked item(s), {collisions} multi-signal collision(s), average confidence {avg_conf}%. Top signal: {first.get('primary_signal', 'n/a')}."
+    else:
+        narrative = 'No urgent evidence collisions detected. Maintain backup and monthly review workflow.'
+    return {
+        'ranked_items': len(priority_items),
+        'multi_signal_collisions': collisions,
+        'average_confidence': avg_conf,
+        'top_signal': first.get('primary_signal', 'n/a') if first else 'n/a',
+        'narrative': narrative,
+    }
+
+
+def _build_guardrail_summary(priority_items: list[dict[str, Any]], llm_payload: dict[str, Any]) -> dict[str, Any]:
+    payload_text = str(llm_payload).lower()
+    blocked_terms = [term for term in ('password":', "'password':", 'master_password', 'backup_blob', 'private_key') if term in payload_text]
+    needs_review = [item for item in priority_items if int(item.get('confidence_percent', 0) or 0) < 60]
+    return {
+        'status': 'REVIEW' if blocked_terms else 'PASS',
+        'privacy': 'No secret-looking payload fields detected.' if not blocked_terms else 'Review optional payload for secret-looking fields.',
+        'blocked_terms': blocked_terms,
+        'low_confidence_items': len(needs_review),
+        'narrative': (
+            'Evidence-bound deterministic mode is safe for reports.' if not blocked_terms and not needs_review
+            else f"Review required: {len(blocked_terms)} payload hygiene hit(s), {len(needs_review)} low-confidence item(s)."
+        ),
+    }
+
 def _build_action_plan(metrics: dict[str, Any], priority_items: list[dict[str, Any]]) -> dict[str, list[str]]:
     today: list[str] = []
     this_week: list[str] = []
@@ -379,9 +508,9 @@ def _build_action_plan(metrics: dict[str, Any], priority_items: list[dict[str, A
 
     if not int(metrics.get('total', 0) or 0):
         return {
-            'today': ['Add or import credentials to activate CyberVault AI Guardian.'],
+            'today': ['Add or import credentials to activate CyberVault Local Security Coach.'],
             'this_week': ['Load an assessment dataset to showcase risk analysis during the presentation.'],
-            'long_term': ['Keep the AI layer privacy-first: never send raw passwords or notes to any model.'],
+            'long_term': ['Keep the local coach layer privacy-first: never send raw passwords or notes to any model.'],
         }
 
     for item in priority_items[:5]:
@@ -400,7 +529,7 @@ def _build_action_plan(metrics: dict[str, Any], priority_items: list[dict[str, A
     if int(metrics.get('old', 0) or 0):
         this_week.append('Prioritize old credentials in Email, Banking, Work, Servers, and Crypto categories.')
     if int(metrics.get('missing_fields', 0) or 0):
-        long_term.append('Complete missing websites/tags to improve search, reporting, and future AI explanations.')
+        long_term.append('Complete missing websites/tags to improve search, reporting, and future local coach explanations.')
     long_term.append('Run a monthly vault review and export a fresh encrypted backup after major rotations.')
 
     return {
@@ -413,7 +542,7 @@ def _build_action_plan(metrics: dict[str, Any], priority_items: list[dict[str, A
 def _executive_summary(metrics: dict[str, Any], counts: dict[str, int], priority_items: list[dict[str, Any]]) -> str:
     total = int(metrics.get('total', 0) or 0)
     if not total:
-        return 'AI Guardian is ready, but the vault has no active credentials yet. Add data to generate a meaningful security plan.'
+        return 'Local Security Coach is ready, but the vault has no active credentials yet. Add data to generate a meaningful security plan.'
     score = int(metrics.get('health_score', 0) or 0)
     critical = counts.get('Critical', 0)
     high = counts.get('High', 0)
@@ -429,11 +558,11 @@ def _executive_summary(metrics: dict[str, Any], counts: dict[str, int], priority
     else:
         posture = 'healthy posture'
     top_reason = priority_items[0]['why'] if priority_items else 'no actionable security finding detected'
-    confidence_line = f' Average evidence confidence across priority items is {avg_conf}%.' if avg_conf else ''
+    confidence_line = f' Average heuristic confidence across priority items is {avg_conf}%.' if avg_conf else ''
     return (
-        f'AI Guardian reviewed {total} active credential(s) and scored the vault at {score}/100. '
+        f'Local Security Coach reviewed {total} active credential(s) and scored the vault at {score}/100. '
         f'The current posture is {posture}. The top driver is {top_reason}.{confidence_line} '
-        'The plan is generated locally from redacted security signals only.'
+        'The plan is generated locally from redacted security signals only; confidence is heuristic policy confidence, not calibrated ML accuracy.'
     )
 
 
@@ -441,7 +570,7 @@ def _build_decision_matrix(metrics: dict[str, Any], priority_items: list[dict[st
     if not int(metrics.get('total', 0) or 0):
         return [
             {'lens': 'Data readiness', 'status': 'Waiting', 'why': 'No active credentials are available yet.', 'next_step': 'Add or import credentials.'},
-            {'lens': 'Privacy', 'status': 'Passed', 'why': 'The AI payload is redacted by design.', 'next_step': 'Keep local-first mode enabled.'},
+            {'lens': 'Privacy', 'status': 'Passed', 'why': 'The local coach payload is redacted by design.', 'next_step': 'Keep local-first mode enabled.'},
         ]
     top = priority_items[0] if priority_items else {}
     return [
@@ -452,7 +581,7 @@ def _build_decision_matrix(metrics: dict[str, Any], priority_items: list[dict[st
             'next_step': top.get('recommended_action', 'Maintain backups and monthly reviews.'),
         },
         {
-            'lens': 'Evidence confidence',
+            'lens': 'Heuristic confidence',
             'status': f"{top.get('confidence_percent', 0)}%" if top else 'n/a',
             'why': '; '.join(top.get('evidence_tags', [])[:3]) if top else 'No priority evidence available.',
             'next_step': 'Use the evidence tags before exporting a report.',
@@ -461,7 +590,7 @@ def _build_decision_matrix(metrics: dict[str, Any], priority_items: list[dict[st
             'lens': 'Score recovery',
             'status': 'Projected',
             'why': f"Current score {metrics.get('health_score', 0)}/100 with {metrics.get('weak', 0)} weak, {metrics.get('reused_passwords', 0)} reused, {metrics.get('old', 0)} old.",
-            'next_step': 'Fix top queue items, then regenerate AI Guardian to compare baseline movement.',
+            'next_step': 'Fix top queue items, then regenerate Local Security Coach to compare baseline movement.',
         },
     ]
 
@@ -558,6 +687,134 @@ def _build_coach_overview(metrics: dict[str, Any], priority_items: list[dict[str
     }
 
 
+
+def _build_signal_relationship_graph(priority_items: list[dict[str, Any]]) -> dict[str, Any]:
+    """Build a small explainable graph from redacted local signals.
+
+    This is not a visual ML model. It is a deterministic relationship map that
+    helps the UI explain *why* a priority item is connected to breach, reuse,
+    weak entropy, age, site-fit, and account value signals.
+    """
+    signal_counts: Counter[str] = Counter()
+    category_counts: Counter[str] = Counter()
+    edges: list[dict[str, Any]] = []
+    for item in priority_items[:8]:
+        ref = str(item.get('credential_ref', 'Credential'))
+        category = str(item.get('category', 'General'))
+        category_counts[category] += 1
+        flags = _signal_flags(item)
+        active = [name for name, active_flag in flags.items() if active_flag]
+        for name in active:
+            signal_counts[name] += 1
+            edges.append({
+                'from': ref,
+                'to': name,
+                'weight': SIGNAL_WEIGHTS.get(name, 1),
+                'reason': _primary_signal_for(item) if name == active[0] else name.replace('_', ' '),
+            })
+    top_signals = [
+        {'signal': name, 'count': count, 'weight': SIGNAL_WEIGHTS.get(name, 1)}
+        for name, count in signal_counts.most_common(6)
+    ]
+    top_categories = [
+        {'category': name, 'count': count}
+        for name, count in category_counts.most_common(6)
+    ]
+    if not priority_items:
+        narrative = 'No active priority relationships yet. Add credentials or import a dataset to build the risk graph.'
+    elif top_signals:
+        lead = top_signals[0]
+        narrative = f"{len(edges)} relationship edge(s) mapped. Dominant signal: {lead['signal'].replace('_', ' ')} across {lead['count']} item(s)."
+    else:
+        narrative = 'Priority items exist, but no strong signal relationship dominates the current queue.'
+    return {
+        'node_count': len(priority_items) + len(top_signals) + len(top_categories),
+        'edge_count': len(edges),
+        'top_signals': top_signals,
+        'top_categories': top_categories,
+        'edges': edges[:20],
+        'narrative': narrative,
+    }
+
+
+def _build_guided_remediation_workflow(metrics: dict[str, Any], priority_items: list[dict[str, Any]]) -> dict[str, Any]:
+    total = int(metrics.get('total', 0) or 0)
+    first = priority_items[0] if priority_items else {}
+    breached = int(metrics.get('breached', 0) or 0)
+    reused = int(metrics.get('reused_passwords', 0) or 0)
+    weak = int(metrics.get('weak', 0) or 0)
+    old = int(metrics.get('old', 0) or 0)
+    missing = int(metrics.get('missing_fields', 0) or 0)
+    lanes = [
+        {
+            'lane': '1. Triage',
+            'status': 'READY' if priority_items else 'WAIT',
+            'tasks': [
+                first.get('recommended_action', 'Generate the local plan and identify the first real fix.'),
+                'Confirm evidence tags before editing the credential.',
+            ],
+        },
+        {
+            'lane': '2. Containment',
+            'status': 'HOT' if breached or reused else 'CALM',
+            'tasks': [
+                'Rotate breached/common hits first.' if breached else 'No breach/common hit currently dominates.',
+                'Break reuse groups in one remediation wave.' if reused else 'Reuse chain is not the main blocker.',
+            ],
+        },
+        {
+            'lane': '3. Hardening',
+            'status': 'ACTIVE' if weak or old else 'MONITOR',
+            'tasks': [
+                'Replace weak secrets with unique 20+ character generated values.' if weak else 'Keep entropy checks enabled for future imports.',
+                'Rotate old high-value credentials and record updated dates.' if old else 'No old-password wave is required right now.',
+            ],
+        },
+        {
+            'lane': '4. Evidence',
+            'status': 'ACTIVE' if missing or priority_items else 'READY',
+            'tasks': [
+                'Complete metadata before exporting reports.' if missing else 'Metadata is ready for privacy-safe reporting.',
+                'Regenerate plan and export report package after verification.',
+            ],
+        },
+    ]
+    if not total:
+        narrative = 'Workflow is waiting for vault data. Import credentials to activate triage, containment, hardening, and evidence lanes.'
+        next_checkpoint = 'Add or import credentials, then generate the plan again.'
+    elif first:
+        narrative = f"Start with {first.get('credential_ref', 'top priority')} because {first.get('why', 'it is the strongest local risk driver')}."
+        next_checkpoint = f"Verify top item: {first.get('timeline', 'Review')} · {first.get('primary_signal', 'Signal')} · +{first.get('expected_score_gain', 0)} estimated score gain."
+    else:
+        narrative = 'No urgent priority item. Keep backup, metadata, and monthly review workflow active.'
+        next_checkpoint = 'Run monthly review and export a fresh encrypted backup.'
+    return {
+        'narrative': narrative,
+        'next_checkpoint': next_checkpoint,
+        'lanes': lanes,
+    }
+
+
+def _build_honesty_limits(metrics: dict[str, Any], priority_items: list[dict[str, Any]]) -> dict[str, Any]:
+    confidence_values = [int(item.get('confidence_percent', 0) or 0) for item in priority_items]
+    min_conf = min(confidence_values) if confidence_values else 0
+    return {
+        'title': 'Deterministic local coach, not cloud AI',
+        'claims': [
+            'Uses local vault metrics, analyzer findings, site-profile heuristics, and redacted identifiers only.',
+            'Does not send raw passwords, notes, full usernames, database paths, master keys, or backups to any model.',
+            'Ranks remediation using explainable rules; confidence is heuristic policy confidence, not calibrated ML accuracy.',
+        ],
+        'limits': [
+            'Cannot confirm service-side MFA/session revocation without analyst verification.',
+            'Cannot prove external breach status beyond the local/offline breach/common-password dataset available to the app.',
+            'Cannot guarantee a website accepted the new password until the user updates and verifies the real service.',
+        ],
+        'review_status': 'Review low-confidence items before report export.' if min_conf and min_conf < 60 else 'Ready for privacy-safe reporting after top fixes are verified.',
+        'low_confidence_count': sum(1 for value in confidence_values if value < 60),
+    }
+
+
 def generate_local_security_plan(metrics: dict[str, Any], findings: list[dict[str, Any]], previous_metrics: dict[str, Any] | None = None) -> dict[str, Any]:
     """Create a privacy-preserving, deterministic AI-style security plan.
 
@@ -583,12 +840,16 @@ def generate_local_security_plan(metrics: dict[str, Any], findings: list[dict[st
             'primary_signal': _primary_signal_for(item),
             'urgency_score': _signal_score(item),
             'confidence_percent': _evidence_confidence_for(item),
+            'confidence_band': _confidence_band(_evidence_confidence_for(item)),
             'evidence_tags': _evidence_tags_for(item),
+            'risk_interlocks': _risk_interlocks_for(item),
+            'control_gaps': _control_gaps_for(item),
+            'verification_questions': _verification_questions_for(item),
+            'remediation_playbook': _remediation_playbook_for(item),
             'site_profile': item.get('site_profile', 'General'),
             'site_fit_score': int(item.get('site_fit_score', 100) or 100),
             'site_fit_label': item.get('site_fit_label', 'Strong Fit'),
             'site_policy_requirements': list(item.get('site_policy_requirements', []))[:5],
-            'site_behavior': list(item.get('site_behavior', []))[:4],
             'site_behavior': list(item.get('site_behavior', []))[:4],
             'symbol_guidance': item.get('symbol_guidance', ''),
             'exposure_path': _exposure_path_for(item),
@@ -608,12 +869,28 @@ def generate_local_security_plan(metrics: dict[str, Any], findings: list[dict[st
     decision_matrix = _build_decision_matrix(context['metrics'], priority_items)
     heatmap = _build_posture_heatmap(context['metrics'], priority_items)
     coach_overview = _build_coach_overview(context['metrics'], priority_items, safe_findings)
-    llm_payload = build_optional_llm_payload(context, summary, priority_items, action_plan, decision_matrix=decision_matrix, heatmap=heatmap, coach_overview=coach_overview)
+    risk_fusion_summary = _build_risk_fusion_summary(context['metrics'], priority_items)
+    signal_graph = _build_signal_relationship_graph(priority_items)
+    remediation_workflow = _build_guided_remediation_workflow(context['metrics'], priority_items)
+    honesty_limits = _build_honesty_limits(context['metrics'], priority_items)
+    llm_payload = build_optional_llm_payload(
+        context,
+        summary,
+        priority_items,
+        action_plan,
+        decision_matrix=decision_matrix,
+        heatmap=heatmap,
+        coach_overview=coach_overview,
+        signal_graph=signal_graph,
+        remediation_workflow=remediation_workflow,
+        honesty_limits=honesty_limits,
+    )
     quality_gates = _build_quality_gates(context['metrics'], priority_items, llm_payload)
+    guardrail_summary = _build_guardrail_summary(priority_items, llm_payload)
 
     return {
         'generated_at': datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
-        'mode': 'Local-first Explainable AI Guardian v6 · Site Policy Reasoner + Site Behavior Reasoner + Live Coach UX/UI',
+        'mode': 'Deterministic Local Security Coach v8 · Site Policy Reasoner + Live Coach UX + Signal Graph + Guided Remediation Workflow + Evidence Guardrails',
         'privacy_notice': 'No raw passwords, master keys, notes, full usernames, database paths, or backup blobs are included. Site reasoning uses only local metadata and inferred account profiles.',
         'executive_summary': summary,
         'risk_cards': _risk_cards(counts),
@@ -621,6 +898,11 @@ def generate_local_security_plan(metrics: dict[str, Any], findings: list[dict[st
         'posture_heatmap': heatmap,
         'coach_overview': coach_overview,
         'priority_items': priority_items,
+        'risk_fusion_summary': risk_fusion_summary,
+        'signal_relationship_graph': signal_graph,
+        'guided_remediation_workflow': remediation_workflow,
+        'honesty_limits': honesty_limits,
+        'guardrail_summary': guardrail_summary,
         'decision_matrix': decision_matrix,
         'quality_gates': quality_gates,
         'action_plan': action_plan,
@@ -660,7 +942,7 @@ def _build_ai_style_explanation(
         f'Risk distribution is {risk_line}. The best first move is: {first_action} '
         f'Fix-impact simulation estimates a move to {projected}/100 ({gain:+} points) after the top priorities are handled. '
         f'{heat_line} What changed: {change_line}.{decision_line} '
-        'After that, focus on reuse, old passwords, and incomplete metadata because these are the fastest ways to improve both security and report quality.'
+        'After that, use the verification questions and remediation playbook so the report shows evidence-bound fixes instead of generic advice.'
     )
 
 
@@ -673,6 +955,9 @@ def build_optional_llm_payload(
     decision_matrix: list[dict[str, Any]] | None = None,
     heatmap: list[dict[str, Any]] | None = None,
     coach_overview: dict[str, Any] | None = None,
+    signal_graph: dict[str, Any] | None = None,
+    remediation_workflow: dict[str, Any] | None = None,
+    honesty_limits: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Return a safe payload that could be sent to an LLM later.
 
@@ -681,7 +966,7 @@ def build_optional_llm_payload(
     """
     return {
         'system_prompt': (
-            'You are CyberVault AI Guardian. Explain password-vault risks clearly. '
+            'You are CyberVault Local Security Coach. Explain password-vault risks clearly. '
             'Never request, infer, reveal, transform, or store raw passwords, master keys, full usernames, notes, database files, or backup files. '
             'Use only the redacted fields and explain uncertainty.'
         ),
@@ -694,5 +979,8 @@ def build_optional_llm_payload(
             'decision_matrix': decision_matrix or [],
             'posture_heatmap': heatmap or [],
             'coach_overview': coach_overview or {},
+            'signal_relationship_graph': signal_graph or {},
+            'guided_remediation_workflow': remediation_workflow or {},
+            'honesty_limits': honesty_limits or {},
         },
     }

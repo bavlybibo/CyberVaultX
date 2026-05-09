@@ -8,7 +8,7 @@ def build_change_summary(metrics: dict[str, Any], previous_metrics: dict[str, An
     if not previous_metrics:
         return [
             f'Baseline captured: current vault health is {current_score}/100.',
-            'No previous AI Guardian snapshot is stored yet; export a report after fixes to compare future progress.',
+            'No previous local coach snapshot is stored yet; export a report after fixes to compare future progress.',
         ]
 
     previous_score = int(previous_metrics.get('health_score', current_score) or current_score)

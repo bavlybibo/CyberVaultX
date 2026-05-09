@@ -3,6 +3,7 @@ from __future__ import annotations
 import html
 import json
 import re
+import secrets
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -32,7 +33,7 @@ from .db import SCHEMA_VERSION, VaultDatabase
 from .core.password_policy import validate_master_password_policy
 from .io_utils import atomic_write_text, safe_display_path
 from .security_policy import composite_risk_level, mask_identifier, normalize_issue_list, privacy_safe_title, severity_for_risk
-from .services import AnalysisServiceMixin, AIGuardianServiceMixin, BackupServiceMixin, ProofServiceMixin, ReportServiceMixin, ProductIntelligenceMixin
+from .services import AnalysisServiceMixin, AIGuardianServiceMixin, BackupServiceMixin, ProofServiceMixin, ReportServiceMixin, ProductIntelligenceMixin, ProductUpgradeMixin
 
 
 def utc_now_iso() -> str:
@@ -57,7 +58,7 @@ class Credential:
     view_count: int
 
 
-class VaultManager(AnalysisServiceMixin, AIGuardianServiceMixin, ReportServiceMixin, BackupServiceMixin, ProofServiceMixin, ProductIntelligenceMixin):
+class VaultManager(AnalysisServiceMixin, AIGuardianServiceMixin, ReportServiceMixin, BackupServiceMixin, ProofServiceMixin, ProductIntelligenceMixin, ProductUpgradeMixin):
     def __init__(self, db_path: str | Path) -> None:
         self.db = VaultDatabase(db_path)
         self.master_record = self._load_master_record()
@@ -69,6 +70,57 @@ class VaultManager(AnalysisServiceMixin, AIGuardianServiceMixin, ReportServiceMi
         self._load_unlock_guard_state()
         self.purge_expired_trash()
         self.purge_old_activity_logs()
+
+
+    def create_isolated_demo_vault(
+        self,
+        directory: str | Path | None = None,
+        *,
+        master_password: str = 'Demo!VaultPass123',
+    ) -> tuple['VaultManager', dict[str, Any]]:
+        """Create a separate synthetic demo vault without mutating this vault.
+
+        This is the premium-safe demo flow: it creates a new local database,
+        marks it as an isolated demo vault, seeds the synthetic assessment
+        workspace there, and returns the unlocked demo manager. The current
+        real vault is never modified.
+        """
+        base = Path(directory) if directory is not None else self.db.db_path.parent / 'demo_vaults'
+        base.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+        db_path = base / f'cybervaultx_demo_{stamp}_{secrets.token_hex(4)}.db'
+        demo = type(self)(db_path)
+        demo.setup_master_password('Demo Analyst', master_password)
+        demo.db.set_meta('demo_vault_isolated', '1')
+        demo.db.set_meta('demo_vault_banner', 'DEMO VAULT — synthetic data only')
+        demo.db.set_meta('demo_vault_created_at', utc_now_iso())
+        stats = demo.load_demo_data()
+        demo.add_log(
+            'Isolated Demo Vault Opened',
+            'Synthetic demo vault created in a separate database. Real vault was not modified.',
+            severity='info',
+        )
+        self.add_log(
+            'Isolated Demo Vault Created',
+            'Created a separate synthetic demo vault. No sample credentials were inserted into this vault.',
+            severity='info',
+        )
+        stats = {
+            **dict(stats),
+            'db_path': str(db_path),
+            'isolated': True,
+            'banner': 'DEMO VAULT — synthetic data only',
+            'real_vault_modified': False,
+        }
+        return demo, stats
+
+    @property
+    def is_demo_vault(self) -> bool:
+        return self.get_setting('demo_vault_isolated', '0') == '1'
+
+    @property
+    def demo_vault_banner(self) -> str:
+        return self.get_setting('demo_vault_banner', '') if self.is_demo_vault else ''
 
     def _load_master_record(self) -> MasterRecord | None:
         salt = self.db.get_meta('master_salt')
@@ -248,6 +300,10 @@ class VaultManager(AnalysisServiceMixin, AIGuardianServiceMixin, ReportServiceMi
                 "INSERT INTO app_meta(key, value) VALUES('credential_aad_migrated_v4', '1') ON CONFLICT(key) DO UPDATE SET value=excluded.value"
             )
             conn.commit()
+        try:
+            self.db._meta_cache['credential_aad_migrated_v4'] = '1'
+        except Exception:
+            pass
 
     def _log_target(self, title: str | None = None, *, credential_id: int | None = None) -> str:
         privacy_enabled = self.get_setting('privacy_mode_logs', '1') == '1'
@@ -264,6 +320,10 @@ class VaultManager(AnalysisServiceMixin, AIGuardianServiceMixin, ReportServiceMi
     @property
     def is_initialized(self) -> bool:
         return self.master_record is not None
+
+    def has_master_password(self) -> bool:
+        """Compatibility helper used by GUI smoke tests and release tooling."""
+        return self.is_initialized
 
     @property
     def is_unlocked(self) -> bool:

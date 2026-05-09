@@ -15,7 +15,7 @@ def build_proof_tab(self) -> None:
     self._label(left, 'Security Proof Center', bg=left.cget('bg'), font=('Segoe UI Semibold', 14)).pack(anchor='w')
     self._label(
         left,
-        'Run local proof checks, verify report-package hashes, preview backup restore impact, and confirm tamper-evident audit integrity before delivery.',
+        'Run local proof checks, verify report-package hashes, preview backup restore impact, and confirm local audit hash-chain integrity before delivery.',
         fg=MUTED,
         bg=left.cget('bg'),
         font=('Segoe UI', 9),
@@ -26,6 +26,9 @@ def build_proof_tab(self) -> None:
     self._top_action_button(actions, 'Run Proof Checks', self.run_security_proof_center, kind='accent').pack(side='left')
     self._top_action_button(actions, 'Verify Package', self.verify_report_package_ui).pack(side='left', padx=(8, 0))
     self._top_action_button(actions, 'Preview Backup', self.preview_backup_restore_ui).pack(side='left', padx=(8, 0))
+    self._top_action_button(actions, 'Attack Lab', self.run_attack_simulation_lab_ui).pack(side='left', padx=(8, 0))
+    self._top_action_button(actions, 'Evidence Package', self.export_security_evidence_package_ui).pack(side='left', padx=(8, 0))
+    self._top_action_button(actions, 'Emergency Kit', self.export_emergency_kit_ui).pack(side='left', padx=(8, 0))
 
     grid = tk.Frame(root, bg=APP_BG)
     grid.pack(fill='both', expand=True)
@@ -50,7 +53,13 @@ def build_proof_tab(self) -> None:
     self._style_text_widget(self.package_verify_text)
     self.package_verify_text.configure(state='disabled')
 
-    self._label(ri, 'Backup Restore Preview', bg=ri.cget('bg'), font=('Segoe UI Semibold', 13)).pack(anchor='w', pady=(16, 0))
+    bonus_row = tk.Frame(ri, bg=ri.cget('bg'))
+    bonus_row.pack(fill='x', pady=(14, 0))
+    self._top_action_button(bonus_row, 'Privacy Preview', self.show_privacy_preview_ui).pack(side='left')
+    self._top_action_button(bonus_row, 'Relationship Graph', self.show_relationship_graph_ui).pack(side='left', padx=(8, 0))
+    self._top_action_button(bonus_row, 'Remediation Plan', self.show_remediation_planner_ui).pack(side='left', padx=(8, 0))
+
+    self._label(ri, 'Backup Restore Preview / Bonus Evidence', bg=ri.cget('bg'), font=('Segoe UI Semibold', 13)).pack(anchor='w', pady=(16, 0))
     self._label(ri, textvariable=self.backup_preview_var, bg=ri.cget('bg'), fg=SUBTEXT, font=('Segoe UI', 9), wraplength=520).pack(anchor='w', pady=(4, 10))
     self.backup_preview_text_proof = tk.Text(ri, height=12, wrap='word', bg=INPUT_BG, fg=TEXT, insertbackground=TEXT, relief='flat', bd=0, padx=10, pady=10)
     self.backup_preview_text_proof.pack(fill='both', expand=True)

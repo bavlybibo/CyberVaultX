@@ -1,0 +1,1608 @@
+{
+  "ai_plan": {
+    "action_plan": {
+      "long_term": [
+        "Run a monthly vault review and export a fresh encrypted backup after major rotations."
+      ],
+      "this_week": [
+        "Review moderate findings and clean duplicate or incomplete records."
+      ],
+      "today": [
+        "credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+        "credential #2: Generate a stronger 20+ character password and update the real service."
+      ]
+    },
+    "ai_style_explanation": "I analyzed the vault locally and found a health score of 20/100 across 2 credential(s). Risk distribution is Critical: 2, High: 0, Moderate: 0, Low: 0. The best first move is: credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA. Fix-impact simulation estimates a move to 38/100 (+18 points) after the top priorities are handled.  No hot posture area dominates right now. What changed: Baseline captured: current vault health is 20/100.. Decision lens: First fix → Today because matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category After that, use the verification questions and remediation playbook so the report shows evidence-bound fixes instead of generic advice.",
+    "baseline_persisted": false,
+    "category_focus": {
+      "Admin": 1,
+      "Work": 1
+    },
+    "change_summary": [
+      "Baseline captured: current vault health is 20/100.",
+      "No previous local coach snapshot is stored yet; export a report after fixes to compare future progress."
+    ],
+    "coach_overview": {
+      "first_action": "Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+      "high_value_profiles": 1,
+      "overview": "1 credential(s) do not match their inferred site profile. Show users exactly why the account needs stronger handling.",
+      "profile_distribution": {
+        "Infrastructure / Admin Console": 1,
+        "Work / Business App": 1
+      },
+      "readiness": "Coach should focus on site-fit tuning",
+      "site_fit_mismatches": 1,
+      "site_mix": "Work / Business App: 1, Infrastructure / Admin Console: 1",
+      "strong_site_fits": 0,
+      "ux_prompts": [
+        "Use short next-step copy near the password field instead of long raw analysis blocks.",
+        "Show Length / Mix / Context / Site-fit chips while the user types.",
+        "Only escalate red states when there is a hard blocker such as breach, reuse, weak entropy, or profile mismatch."
+      ]
+    },
+    "decision_matrix": [
+      {
+        "lens": "First fix",
+        "next_step": "Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+        "status": "Today",
+        "why": "matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category"
+      },
+      {
+        "lens": "Heuristic confidence",
+        "next_step": "Use the evidence tags before exporting a report.",
+        "status": "98%",
+        "why": "offline breach/common-password signal; score 16/100; site-fit 1/100 for Work / Business App"
+      },
+      {
+        "lens": "Score recovery",
+        "next_step": "Fix top queue items, then regenerate Local Security Coach to compare baseline movement.",
+        "status": "Projected",
+        "why": "Current score 20/100 with 2 weak, 0 reused, 0 old."
+      }
+    ],
+    "executive_summary": "Local Security Coach reviewed 2 active credential(s) and scored the vault at 20/100. The current posture is critical attention required. The top driver is matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category. Average heuristic confidence across priority items is 90%. The plan is generated locally from redacted security signals only; confidence is heuristic policy confidence, not calibrated ML accuracy.",
+    "fix_impact": {
+      "assumptions": [
+        "Estimate assumes the top priority items are rotated or remediated successfully.",
+        "Real score changes depend on whether reuse chains, weak passwords, and metadata gaps are fully fixed."
+      ],
+      "current_score": 20,
+      "estimated_gain": 18,
+      "projected_score": 38,
+      "top_fixes": [
+        "credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+        "credential #2: Generate a stronger 20+ character password and update the real service."
+      ]
+    },
+    "generated_at": "2026-05-09T09:40:39+00:00",
+    "guardrail_summary": {
+      "blocked_terms": [],
+      "low_confidence_items": 0,
+      "narrative": "Evidence-bound deterministic mode is safe for reports.",
+      "privacy": "No secret-looking payload fields detected.",
+      "status": "PASS"
+    },
+    "guided_remediation_workflow": {
+      "lanes": [
+        {
+          "lane": "1. Triage",
+          "status": "READY",
+          "tasks": [
+            "Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+            "Confirm evidence tags before editing the credential."
+          ]
+        },
+        {
+          "lane": "2. Containment",
+          "status": "CALM",
+          "tasks": [
+            "No breach/common hit currently dominates.",
+            "Reuse chain is not the main blocker."
+          ]
+        },
+        {
+          "lane": "3. Hardening",
+          "status": "ACTIVE",
+          "tasks": [
+            "Replace weak secrets with unique 20+ character generated values.",
+            "No old-password wave is required right now."
+          ]
+        },
+        {
+          "lane": "4. Evidence",
+          "status": "ACTIVE",
+          "tasks": [
+            "Metadata is ready for privacy-safe reporting.",
+            "Regenerate plan and export report package after verification."
+          ]
+        }
+      ],
+      "narrative": "Start with credential #1 because matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category.",
+      "next_checkpoint": "Verify top item: Today · Breach/Common hit · +34 estimated score gain."
+    },
+    "honesty_limits": {
+      "claims": [
+        "Uses local vault metrics, analyzer findings, site-profile heuristics, and redacted identifiers only.",
+        "Does not send raw passwords, notes, full usernames, database paths, master keys, or backups to any model.",
+        "Ranks remediation using explainable rules; confidence is heuristic policy confidence, not calibrated ML accuracy."
+      ],
+      "limits": [
+        "Cannot confirm service-side MFA/session revocation without analyst verification.",
+        "Cannot prove external breach status beyond the local/offline breach/common-password dataset available to the app.",
+        "Cannot guarantee a website accepted the new password until the user updates and verifies the real service."
+      ],
+      "low_confidence_count": 0,
+      "review_status": "Ready for privacy-safe reporting after top fixes are verified.",
+      "title": "Deterministic local coach, not cloud AI"
+    },
+    "mode": "Deterministic Local Security Coach v8 · Site Policy Reasoner + Live Coach UX + Signal Graph + Guided Remediation Workflow + Evidence Guardrails",
+    "optional_llm_payload": {
+      "system_prompt": "You are CyberVault Local Security Coach. Explain password-vault risks clearly. Never request, infer, reveal, transform, or store raw passwords, master keys, full usernames, notes, database files, or backup files. Use only the redacted fields and explain uncertainty.",
+      "user_context": {
+        "action_plan": {
+          "long_term": [
+            "Run a monthly vault review and export a fresh encrypted backup after major rotations."
+          ],
+          "this_week": [
+            "Review moderate findings and clean duplicate or incomplete records."
+          ],
+          "today": [
+            "credential #1: Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+            "credential #2: Generate a stronger 20+ character password and update the real service."
+          ]
+        },
+        "coach_overview": {
+          "first_action": "Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+          "high_value_profiles": 1,
+          "overview": "1 credential(s) do not match their inferred site profile. Show users exactly why the account needs stronger handling.",
+          "profile_distribution": {
+            "Infrastructure / Admin Console": 1,
+            "Work / Business App": 1
+          },
+          "readiness": "Coach should focus on site-fit tuning",
+          "site_fit_mismatches": 1,
+          "site_mix": "Work / Business App: 1, Infrastructure / Admin Console: 1",
+          "strong_site_fits": 0,
+          "ux_prompts": [
+            "Use short next-step copy near the password field instead of long raw analysis blocks.",
+            "Show Length / Mix / Context / Site-fit chips while the user types.",
+            "Only escalate red states when there is a hard blocker such as breach, reuse, weak entropy, or profile mismatch."
+          ]
+        },
+        "decision_matrix": [
+          {
+            "lens": "First fix",
+            "next_step": "Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+            "status": "Today",
+            "why": "matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category"
+          },
+          {
+            "lens": "Heuristic confidence",
+            "next_step": "Use the evidence tags before exporting a report.",
+            "status": "98%",
+            "why": "offline breach/common-password signal; score 16/100; site-fit 1/100 for Work / Business App"
+          },
+          {
+            "lens": "Score recovery",
+            "next_step": "Fix top queue items, then regenerate Local Security Coach to compare baseline movement.",
+            "status": "Projected",
+            "why": "Current score 20/100 with 2 weak, 0 reused, 0 old."
+          }
+        ],
+        "executive_summary": "Local Security Coach reviewed 2 active credential(s) and scored the vault at 20/100. The current posture is critical attention required. The top driver is matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category. Average heuristic confidence across priority items is 90%. The plan is generated locally from redacted security signals only; confidence is heuristic policy confidence, not calibrated ML accuracy.",
+        "guided_remediation_workflow": {
+          "lanes": [
+            {
+              "lane": "1. Triage",
+              "status": "READY",
+              "tasks": [
+                "Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+                "Confirm evidence tags before editing the credential."
+              ]
+            },
+            {
+              "lane": "2. Containment",
+              "status": "CALM",
+              "tasks": [
+                "No breach/common hit currently dominates.",
+                "Reuse chain is not the main blocker."
+              ]
+            },
+            {
+              "lane": "3. Hardening",
+              "status": "ACTIVE",
+              "tasks": [
+                "Replace weak secrets with unique 20+ character generated values.",
+                "No old-password wave is required right now."
+              ]
+            },
+            {
+              "lane": "4. Evidence",
+              "status": "ACTIVE",
+              "tasks": [
+                "Metadata is ready for privacy-safe reporting.",
+                "Regenerate plan and export report package after verification."
+              ]
+            }
+          ],
+          "narrative": "Start with credential #1 because matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category.",
+          "next_checkpoint": "Verify top item: Today · Breach/Common hit · +34 estimated score gain."
+        },
+        "honesty_limits": {
+          "claims": [
+            "Uses local vault metrics, analyzer findings, site-profile heuristics, and redacted identifiers only.",
+            "Does not send raw passwords, notes, full usernames, database paths, master keys, or backups to any model.",
+            "Ranks remediation using explainable rules; confidence is heuristic policy confidence, not calibrated ML accuracy."
+          ],
+          "limits": [
+            "Cannot confirm service-side MFA/session revocation without analyst verification.",
+            "Cannot prove external breach status beyond the local/offline breach/common-password dataset available to the app.",
+            "Cannot guarantee a website accepted the new password until the user updates and verifies the real service."
+          ],
+          "low_confidence_count": 0,
+          "review_status": "Ready for privacy-safe reporting after top fixes are verified.",
+          "title": "Deterministic local coach, not cloud AI"
+        },
+        "metrics": {
+          "breached": 0,
+          "duplicate_sites": 0,
+          "duplicate_usernames": 0,
+          "health_score": 20,
+          "missing_fields": 0,
+          "old": 0,
+          "reused_passwords": 0,
+          "total": 2,
+          "trashed": 0,
+          "weak": 2
+        },
+        "policy": {
+          "explainable_rules": true,
+          "local_first": true,
+          "no_backup_data": true,
+          "no_database_paths": true,
+          "no_full_usernames": true,
+          "no_notes": true,
+          "no_raw_passwords": true
+        },
+        "posture_heatmap": [
+          {
+            "area": "Breach",
+            "count": 0,
+            "guidance": "Rotate leaked/common hits first.",
+            "heat": "Clear",
+            "related": [
+              "credential #1"
+            ]
+          },
+          {
+            "area": "Reuse",
+            "count": 0,
+            "guidance": "Break shared passwords across accounts.",
+            "heat": "Clear",
+            "related": []
+          },
+          {
+            "area": "Weakness",
+            "count": 2,
+            "guidance": "Increase length and randomness.",
+            "heat": "Warm",
+            "related": []
+          },
+          {
+            "area": "Age",
+            "count": 0,
+            "guidance": "Rotate credentials older than policy.",
+            "heat": "Clear",
+            "related": []
+          },
+          {
+            "area": "Metadata",
+            "count": 0,
+            "guidance": "Complete site, category, and tags for reporting.",
+            "heat": "Clear",
+            "related": []
+          },
+          {
+            "area": "Site Fit",
+            "count": 1,
+            "guidance": "Match password strength to the inferred website/account profile.",
+            "heat": "Warm",
+            "related": []
+          }
+        ],
+        "priority_items": [
+          {
+            "attack_scenario": "Credential stuffing path: an attacker tests a known/common password against this account and any reused services.",
+            "business_impact": "Potential workspace compromise, lateral movement, mailbox takeover, or operational disruption.",
+            "category": "Work",
+            "confidence_band": "Very High / evidence-rich",
+            "confidence_percent": 98,
+            "control_gaps": [
+              "Session revocation/MFA status must be checked outside the vault.",
+              "Password policy target is not satisfied by the current secret.",
+              "Site-specific strength expectation is not met."
+            ],
+            "credential_ref": "credential #1",
+            "decision_trace": [
+              "Risk tier: Critical",
+              "Primary signal: Breach/Common hit",
+              "Heuristic confidence: 98%",
+              "Urgency score: 99/100",
+              "Site-fit score 1/100 for Work / Business App raised the priority.",
+              "High-value category raised the priority."
+            ],
+            "evidence_tags": [
+              "offline breach/common-password signal",
+              "score 16/100",
+              "site-fit 1/100 for Work / Business App",
+              "high-value category: Work",
+              "Ends with a year-like suffix",
+              "Season/month word detected; these are common password bases"
+            ],
+            "expected_score_gain": 34,
+            "exposure_path": "breach reuse → mailbox/session takeover",
+            "fix_path": [
+              "Generate a unique 20+ character replacement.",
+              "Update the real service password, then save the new value in CyberVault.",
+              "Sign out other sessions or revoke trusted devices when the service supports it.",
+              "Use the Work / Business App profile target instead of a generic password.",
+              "Check site behavior: SSO/MFA state matters; Connected app review.",
+              "Prefer a unique generated password that reaches the profile length target."
+            ],
+            "issues": [
+              "Ends with a year-like suffix.",
+              "Season/month word detected; these are common password bases.",
+              "Dictionary token(s) detected: summer.",
+              "Dictionary word with predictable numeric/symbol suffix detected."
+            ],
+            "primary_signal": "Breach/Common hit",
+            "recommended_action": "Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+            "remediation_playbook": {
+              "aftercare": [
+                "Regenerate Local Security Coach plan and compare projected score movement.",
+                "Export a privacy-safe report package only after top fixes are verified."
+              ],
+              "do_now": [
+                "Generate a unique 20+ character replacement.",
+                "Update the real service password, then save the new value in CyberVault.",
+                "Sign out other sessions or revoke trusted devices when the service supports it.",
+                "Use the Work / Business App profile target instead of a generic password."
+              ],
+              "verify": [
+                "Confirm sign-out/revoke-session option on the real service if available.",
+                "Search the vault for the same password/reuse group before closing the task.",
+                "Confirm MFA/recovery codes are enabled and stored safely.",
+                "Re-run analyzer and site-fit check after saving the replacement."
+              ]
+            },
+            "risk_interlocks": [
+              "Weak entropy + high-value category: treat as elevated takeover risk.",
+              "Site-fit mismatch + sensitive account type: generic password guidance is not enough."
+            ],
+            "risk_level": "Critical",
+            "score": 16,
+            "site_behavior": [
+              "SSO/MFA state matters",
+              "Connected app review",
+              "Team data exposure"
+            ],
+            "site_fit_label": "Unsafe Fit",
+            "site_fit_score": 1,
+            "site_policy_requirements": [
+              "Minimum length 16+ characters",
+              "Recommended length 22+ characters for Work / Business App",
+              "Contains lowercase letters",
+              "Contains uppercase letters",
+              "Contains digits"
+            ],
+            "site_profile": "Work / Business App",
+            "symbol_guidance": "Use symbols unless the service rejects them; integrations should be reviewed.",
+            "timeline": "Today",
+            "urgency_score": 99,
+            "verification_questions": [
+              "Was this password changed on the real service after the breach/common-password hit?",
+              "Is MFA enabled for this high-value account?",
+              "Does the generated replacement satisfy the inferred site profile and form constraints?"
+            ],
+            "why": "matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category"
+          },
+          {
+            "attack_scenario": "Guessing/cracking path: predictable structure lowers the work factor for online guessing or offline cracking after a service breach.",
+            "business_impact": "Lower direct impact, but it still weakens vault hygiene and executive report quality.",
+            "category": "Admin",
+            "confidence_band": "High / enough local evidence",
+            "confidence_percent": 81,
+            "control_gaps": [
+              "Password policy target is not satisfied by the current secret."
+            ],
+            "credential_ref": "credential #2",
+            "decision_trace": [
+              "Risk tier: Critical",
+              "Primary signal: Weak entropy",
+              "Heuristic confidence: 81%",
+              "Urgency score: 49/100",
+              "High-value category raised the priority."
+            ],
+            "evidence_tags": [
+              "score 23/100",
+              "high-value category: Admin",
+              "Short alphabetic or numeric sequence detected",
+              "Dictionary token(s) detected: admin, portal",
+              "Dictionary word with predictable numeric/symbol suffix detected"
+            ],
+            "expected_score_gain": 22,
+            "exposure_path": "weak secret hygiene → account takeover or data exposure",
+            "fix_path": [
+              "Generate a unique 20+ character replacement.",
+              "Update the real service password, then save the new value in CyberVault.",
+              "Enable MFA or hardware-key protection where available.",
+              "Export a fresh privacy-safe report package after remediation."
+            ],
+            "issues": [
+              "Short alphabetic or numeric sequence detected.",
+              "Dictionary token(s) detected: admin, portal.",
+              "Dictionary word with predictable numeric/symbol suffix detected.",
+              "Passphrase model: 3 word(s), conservative wordlist estimate 27.0 bits. This is a heuristic; strength depends on whether the words were randomly generated."
+            ],
+            "primary_signal": "Weak entropy",
+            "recommended_action": "Generate a stronger 20+ character password and update the real service.",
+            "remediation_playbook": {
+              "aftercare": [
+                "Regenerate Local Security Coach plan and compare projected score movement.",
+                "Export a privacy-safe report package only after top fixes are verified."
+              ],
+              "do_now": [
+                "Generate a unique 20+ character replacement.",
+                "Update the real service password, then save the new value in CyberVault.",
+                "Enable MFA or hardware-key protection where available.",
+                "Export a fresh privacy-safe report package after remediation."
+              ],
+              "verify": [
+                "Confirm MFA/recovery codes are enabled and stored safely."
+              ]
+            },
+            "risk_interlocks": [
+              "Weak entropy + high-value category: treat as elevated takeover risk."
+            ],
+            "risk_level": "Critical",
+            "score": 23,
+            "site_behavior": [
+              "Strict login risk",
+              "API tokens may remain active after password rotation",
+              "Session revocation should be verified manually"
+            ],
+            "site_fit_label": "Needs Tune-up",
+            "site_fit_score": 73,
+            "site_policy_requirements": [
+              "Minimum length 18+ characters",
+              "Recommended length 26+ characters for Infrastructure / Admin Console",
+              "Contains lowercase letters",
+              "Contains uppercase letters",
+              "Contains digits"
+            ],
+            "site_profile": "Infrastructure / Admin Console",
+            "symbol_guidance": "Symbols are expected for admin-grade generated secrets.",
+            "timeline": "Today",
+            "urgency_score": 49,
+            "verification_questions": [
+              "Is MFA enabled for this high-value account?"
+            ],
+            "why": "has weak password strength, belongs to a high-value Admin category"
+          }
+        ],
+        "signal_relationship_graph": {
+          "edge_count": 6,
+          "edges": [
+            {
+              "from": "credential #1",
+              "reason": "Breach/Common hit",
+              "to": "breach_hit",
+              "weight": 32
+            },
+            {
+              "from": "credential #1",
+              "reason": "weak entropy",
+              "to": "weak_entropy",
+              "weight": 20
+            },
+            {
+              "from": "credential #1",
+              "reason": "site policy mismatch",
+              "to": "site_policy_mismatch",
+              "weight": 16
+            },
+            {
+              "from": "credential #1",
+              "reason": "high value category",
+              "to": "high_value_category",
+              "weight": 10
+            },
+            {
+              "from": "credential #2",
+              "reason": "Weak entropy",
+              "to": "weak_entropy",
+              "weight": 20
+            },
+            {
+              "from": "credential #2",
+              "reason": "high value category",
+              "to": "high_value_category",
+              "weight": 10
+            }
+          ],
+          "narrative": "6 relationship edge(s) mapped. Dominant signal: weak entropy across 2 item(s).",
+          "node_count": 8,
+          "top_categories": [
+            {
+              "category": "Work",
+              "count": 1
+            },
+            {
+              "category": "Admin",
+              "count": 1
+            }
+          ],
+          "top_signals": [
+            {
+              "count": 2,
+              "signal": "weak_entropy",
+              "weight": 20
+            },
+            {
+              "count": 2,
+              "signal": "high_value_category",
+              "weight": 10
+            },
+            {
+              "count": 1,
+              "signal": "breach_hit",
+              "weight": 32
+            },
+            {
+              "count": 1,
+              "signal": "site_policy_mismatch",
+              "weight": 16
+            }
+          ]
+        }
+      }
+    },
+    "posture_heatmap": [
+      {
+        "area": "Breach",
+        "count": 0,
+        "guidance": "Rotate leaked/common hits first.",
+        "heat": "Clear",
+        "related": [
+          "credential #1"
+        ]
+      },
+      {
+        "area": "Reuse",
+        "count": 0,
+        "guidance": "Break shared passwords across accounts.",
+        "heat": "Clear",
+        "related": []
+      },
+      {
+        "area": "Weakness",
+        "count": 2,
+        "guidance": "Increase length and randomness.",
+        "heat": "Warm",
+        "related": []
+      },
+      {
+        "area": "Age",
+        "count": 0,
+        "guidance": "Rotate credentials older than policy.",
+        "heat": "Clear",
+        "related": []
+      },
+      {
+        "area": "Metadata",
+        "count": 0,
+        "guidance": "Complete site, category, and tags for reporting.",
+        "heat": "Clear",
+        "related": []
+      },
+      {
+        "area": "Site Fit",
+        "count": 1,
+        "guidance": "Match password strength to the inferred website/account profile.",
+        "heat": "Warm",
+        "related": []
+      }
+    ],
+    "priority_items": [
+      {
+        "attack_scenario": "Credential stuffing path: an attacker tests a known/common password against this account and any reused services.",
+        "business_impact": "Potential workspace compromise, lateral movement, mailbox takeover, or operational disruption.",
+        "category": "Work",
+        "confidence_band": "Very High / evidence-rich",
+        "confidence_percent": 98,
+        "control_gaps": [
+          "Session revocation/MFA status must be checked outside the vault.",
+          "Password policy target is not satisfied by the current secret.",
+          "Site-specific strength expectation is not met."
+        ],
+        "credential_ref": "credential #1",
+        "decision_trace": [
+          "Risk tier: Critical",
+          "Primary signal: Breach/Common hit",
+          "Heuristic confidence: 98%",
+          "Urgency score: 99/100",
+          "Site-fit score 1/100 for Work / Business App raised the priority.",
+          "High-value category raised the priority."
+        ],
+        "evidence_tags": [
+          "offline breach/common-password signal",
+          "score 16/100",
+          "site-fit 1/100 for Work / Business App",
+          "high-value category: Work",
+          "Ends with a year-like suffix",
+          "Season/month word detected; these are common password bases"
+        ],
+        "expected_score_gain": 34,
+        "exposure_path": "breach reuse → mailbox/session takeover",
+        "fix_path": [
+          "Generate a unique 20+ character replacement.",
+          "Update the real service password, then save the new value in CyberVault.",
+          "Sign out other sessions or revoke trusted devices when the service supports it.",
+          "Use the Work / Business App profile target instead of a generic password.",
+          "Check site behavior: SSO/MFA state matters; Connected app review.",
+          "Prefer a unique generated password that reaches the profile length target."
+        ],
+        "issues": [
+          "Ends with a year-like suffix.",
+          "Season/month word detected; these are common password bases.",
+          "Dictionary token(s) detected: summer.",
+          "Dictionary word with predictable numeric/symbol suffix detected."
+        ],
+        "primary_signal": "Breach/Common hit",
+        "recommended_action": "Rotate immediately, check reuse, revoke active sessions where possible, then enable MFA.",
+        "remediation_playbook": {
+          "aftercare": [
+            "Regenerate Local Security Coach plan and compare projected score movement.",
+            "Export a privacy-safe report package only after top fixes are verified."
+          ],
+          "do_now": [
+            "Generate a unique 20+ character replacement.",
+            "Update the real service password, then save the new value in CyberVault.",
+            "Sign out other sessions or revoke trusted devices when the service supports it.",
+            "Use the Work / Business App profile target instead of a generic password."
+          ],
+          "verify": [
+            "Confirm sign-out/revoke-session option on the real service if available.",
+            "Search the vault for the same password/reuse group before closing the task.",
+            "Confirm MFA/recovery codes are enabled and stored safely.",
+            "Re-run analyzer and site-fit check after saving the replacement."
+          ]
+        },
+        "risk_interlocks": [
+          "Weak entropy + high-value category: treat as elevated takeover risk.",
+          "Site-fit mismatch + sensitive account type: generic password guidance is not enough."
+        ],
+        "risk_level": "Critical",
+        "score": 16,
+        "site_behavior": [
+          "SSO/MFA state matters",
+          "Connected app review",
+          "Team data exposure"
+        ],
+        "site_fit_label": "Unsafe Fit",
+        "site_fit_score": 1,
+        "site_policy_requirements": [
+          "Minimum length 16+ characters",
+          "Recommended length 22+ characters for Work / Business App",
+          "Contains lowercase letters",
+          "Contains uppercase letters",
+          "Contains digits"
+        ],
+        "site_profile": "Work / Business App",
+        "symbol_guidance": "Use symbols unless the service rejects them; integrations should be reviewed.",
+        "timeline": "Today",
+        "urgency_score": 99,
+        "verification_questions": [
+          "Was this password changed on the real service after the breach/common-password hit?",
+          "Is MFA enabled for this high-value account?",
+          "Does the generated replacement satisfy the inferred site profile and form constraints?"
+        ],
+        "why": "matched breach/common-password intelligence, has weak password strength, does not fit the inferred Work / Business App policy, belongs to a high-value Work category"
+      },
+      {
+        "attack_scenario": "Guessing/cracking path: predictable structure lowers the work factor for online guessing or offline cracking after a service breach.",
+        "business_impact": "Lower direct impact, but it still weakens vault hygiene and executive report quality.",
+        "category": "Admin",
+        "confidence_band": "High / enough local evidence",
+        "confidence_percent": 81,
+        "control_gaps": [
+          "Password policy target is not satisfied by the current secret."
+        ],
+        "credential_ref": "credential #2",
+        "decision_trace": [
+          "Risk tier: Critical",
+          "Primary signal: Weak entropy",
+          "Heuristic confidence: 81%",
+          "Urgency score: 49/100",
+          "High-value category raised the priority."
+        ],
+        "evidence_tags": [
+          "score 23/100",
+          "high-value category: Admin",
+          "Short alphabetic or numeric sequence detected",
+          "Dictionary token(s) detected: admin, portal",
+          "Dictionary word with predictable numeric/symbol suffix detected"
+        ],
+        "expected_score_gain": 22,
+        "exposure_path": "weak secret hygiene → account takeover or data exposure",
+        "fix_path": [
+          "Generate a unique 20+ character replacement.",
+          "Update the real service password, then save the new value in CyberVault.",
+          "Enable MFA or hardware-key protection where available.",
+          "Export a fresh privacy-safe report package after remediation."
+        ],
+        "issues": [
+          "Short alphabetic or numeric sequence detected.",
+          "Dictionary token(s) detected: admin, portal.",
+          "Dictionary word with predictable numeric/symbol suffix detected.",
+          "Passphrase model: 3 word(s), conservative wordlist estimate 27.0 bits. This is a heuristic; strength depends on whether the words were randomly generated."
+        ],
+        "primary_signal": "Weak entropy",
+        "recommended_action": "Generate a stronger 20+ character password and update the real service.",
+        "remediation_playbook": {
+          "aftercare": [
+            "Regenerate Local Security Coach plan and compare projected score movement.",
+            "Export a privacy-safe report package only after top fixes are verified."
+          ],
+          "do_now": [
+            "Generate a unique 20+ character replacement.",
+            "Update the real service password, then save the new value in CyberVault.",
+            "Enable MFA or hardware-key protection where available.",
+            "Export a fresh privacy-safe report package after remediation."
+          ],
+          "verify": [
+            "Confirm MFA/recovery codes are enabled and stored safely."
+          ]
+        },
+        "risk_interlocks": [
+          "Weak entropy + high-value category: treat as elevated takeover risk."
+        ],
+        "risk_level": "Critical",
+        "score": 23,
+        "site_behavior": [
+          "Strict login risk",
+          "API tokens may remain active after password rotation",
+          "Session revocation should be verified manually"
+        ],
+        "site_fit_label": "Needs Tune-up",
+        "site_fit_score": 73,
+        "site_policy_requirements": [
+          "Minimum length 18+ characters",
+          "Recommended length 26+ characters for Infrastructure / Admin Console",
+          "Contains lowercase letters",
+          "Contains uppercase letters",
+          "Contains digits"
+        ],
+        "site_profile": "Infrastructure / Admin Console",
+        "symbol_guidance": "Symbols are expected for admin-grade generated secrets.",
+        "timeline": "Today",
+        "urgency_score": 49,
+        "verification_questions": [
+          "Is MFA enabled for this high-value account?"
+        ],
+        "why": "has weak password strength, belongs to a high-value Admin category"
+      }
+    ],
+    "privacy_notice": "No raw passwords, master keys, notes, full usernames, database paths, or backup blobs are included. Site reasoning uses only local metadata and inferred account profiles.",
+    "quality_gates": [
+      {
+        "detail": "Priority records use credential refs and masked username hints only.",
+        "gate": "Secret redaction",
+        "status": "PASS"
+      },
+      {
+        "detail": "2 ranked remediation item(s) generated from current telemetry.",
+        "gate": "Actionability",
+        "status": "PASS"
+      },
+      {
+        "detail": "Optional payload is designed for future models without raw passwords, master keys, notes, paths, or backup blobs.",
+        "gate": "LLM payload hygiene",
+        "status": "REVIEW"
+      },
+      {
+        "detail": "Each priority item includes confidence, primary signal, evidence tags, and a remediation path.",
+        "gate": "Evidence coverage",
+        "status": "PASS"
+      }
+    ],
+    "risk_cards": {
+      "Critical": {
+        "count": 2,
+        "narrative": "Immediate rotation candidates. Treat these like incident-response tasks."
+      },
+      "High": {
+        "count": 0,
+        "narrative": "Strong assessment value. Fixing these usually improves health score quickly."
+      },
+      "Low": {
+        "count": 0,
+        "narrative": "Healthy or low-noise entries. Keep them monitored during monthly reviews."
+      },
+      "Moderate": {
+        "count": 0,
+        "narrative": "Cleanup and metadata improvements that reduce future risk."
+      }
+    },
+    "risk_fusion_summary": {
+      "average_confidence": 90,
+      "multi_signal_collisions": 2,
+      "narrative": "2 ranked item(s), 2 multi-signal collision(s), average confidence 90%. Top signal: Breach/Common hit.",
+      "ranked_items": 2,
+      "top_signal": "Breach/Common hit"
+    },
+    "signal_relationship_graph": {
+      "edge_count": 6,
+      "edges": [
+        {
+          "from": "credential #1",
+          "reason": "Breach/Common hit",
+          "to": "breach_hit",
+          "weight": 32
+        },
+        {
+          "from": "credential #1",
+          "reason": "weak entropy",
+          "to": "weak_entropy",
+          "weight": 20
+        },
+        {
+          "from": "credential #1",
+          "reason": "site policy mismatch",
+          "to": "site_policy_mismatch",
+          "weight": 16
+        },
+        {
+          "from": "credential #1",
+          "reason": "high value category",
+          "to": "high_value_category",
+          "weight": 10
+        },
+        {
+          "from": "credential #2",
+          "reason": "Weak entropy",
+          "to": "weak_entropy",
+          "weight": 20
+        },
+        {
+          "from": "credential #2",
+          "reason": "high value category",
+          "to": "high_value_category",
+          "weight": 10
+        }
+      ],
+      "narrative": "6 relationship edge(s) mapped. Dominant signal: weak entropy across 2 item(s).",
+      "node_count": 8,
+      "top_categories": [
+        {
+          "category": "Work",
+          "count": 1
+        },
+        {
+          "category": "Admin",
+          "count": 1
+        }
+      ],
+      "top_signals": [
+        {
+          "count": 2,
+          "signal": "weak_entropy",
+          "weight": 20
+        },
+        {
+          "count": 2,
+          "signal": "high_value_category",
+          "weight": 10
+        },
+        {
+          "count": 1,
+          "signal": "breach_hit",
+          "weight": 32
+        },
+        {
+          "count": 1,
+          "signal": "site_policy_mismatch",
+          "weight": 16
+        }
+      ]
+    }
+  },
+  "encryption_status": "AES-GCM Protected",
+  "export_format": "json",
+  "findings": [
+    {
+      "breached": false,
+      "category": "Work",
+      "common_password": true,
+      "id": 1,
+      "intelligence": {
+        "breached": false,
+        "common_password": true,
+        "effective_entropy_bits": 0.0,
+        "entropy_bits": 0.0,
+        "explanation": "It also matches a known common password pattern.",
+        "fix_recommendations": [
+          "Rotate this password immediately.",
+          "Generate a 16+ character password with uppercase, lowercase, digits, and symbols."
+        ],
+        "label": "Very Weak",
+        "old_password": false,
+        "patterns": [
+          "Dictionary suffix pattern",
+          "Dictionary words",
+          "Season pattern",
+          "Weak base word",
+          "Year suffix"
+        ],
+        "raw_entropy_bits": 78.7,
+        "remediation_advice": "Consider a 16+ character password or passphrase.",
+        "reuse_count": 1,
+        "risk_level": "Critical",
+        "score": 16,
+        "score_cap": 50,
+        "score_cap_reason": "season/month plus year or predictable suffix",
+        "severity": "danger",
+        "site_fit_label": "Unsafe Fit",
+        "site_fit_score": 1,
+        "site_policy": {
+          "confidence": 98,
+          "fit_label": "Unsafe Fit",
+          "fit_score": 1,
+          "form_behavior": [
+            "SSO/MFA state matters",
+            "Connected app review",
+            "Team data exposure"
+          ],
+          "generator_preset": "Work",
+          "headline": "Unsafe Fit: not ready for Work / Business App. Fix the top blockers first.",
+          "mfa_hint": "Enable MFA and review connected apps after rotation.",
+          "must_fix": [
+            "Make it at least 16 characters; target 22+.",
+            "Underlying password strength is weak; generate a fresh value.",
+            "Rotate immediately: breach/common-password signal is not acceptable for this site profile."
+          ],
+          "passed_checks": [
+            "Includes lowercase characters.",
+            "Includes uppercase characters.",
+            "Includes digit characters.",
+            "Includes symbol characters.",
+            "No obvious site/name/email word detected."
+          ],
+          "profile": "Work / Business App",
+          "recommended_length": 22,
+          "requirements": [
+            "Minimum length 16+ characters",
+            "Recommended length 22+ characters for Work / Business App",
+            "Contains lowercase letters",
+            "Contains uppercase letters",
+            "Contains digits",
+            "Contains symbols",
+            "Use symbols unless the service rejects them; integrations should be reviewed.",
+            "Unique password; no reuse across accounts",
+            "MFA/passkey should be enabled outside the vault"
+          ],
+          "risk_tier": "High",
+          "site_reason": "Work accounts can expose private projects and team data.",
+          "symbol_guidance": "Use symbols unless the service rejects them; integrations should be reviewed.",
+          "warnings": []
+        },
+        "site_profile": "Work / Business App",
+        "suggestions": [
+          "Consider a 16+ character password or passphrase.",
+          "Replace predictable words, dates, keyboard walks, or context terms with a generated random value.",
+          "Use the generator to create a unique 16+ character password for this account."
+        ],
+        "title": "Credential #1",
+        "username": "",
+        "warnings": [
+          "Ends with a year-like suffix.",
+          "Season/month word detected; these are common password bases.",
+          "Dictionary token(s) detected: summer.",
+          "Dictionary word with predictable numeric/symbol suffix detected.",
+          "Effective entropy is low after removing predictable pattern value."
+        ],
+        "website": "",
+        "why_matters": [
+          "Attackers prioritize leaked and common passwords during credential stuffing and password spraying.",
+          "Weak entropy and predictable patterns reduce the effort required to guess the password."
+        ]
+      },
+      "issues": [
+        "Ends with a year-like suffix.",
+        "Season/month word detected; these are common password bases.",
+        "Dictionary token(s) detected: summer.",
+        "Dictionary word with predictable numeric/symbol suffix detected.",
+        "Effective entropy is low after removing predictable pattern value.",
+        "Below inferred site-policy fit: Work / Business App (1/100)."
+      ],
+      "label": "Very Weak",
+      "old_password": false,
+      "reuse_count": 1,
+      "risk_level": "Critical",
+      "score": 16,
+      "site_fit_label": "Unsafe Fit",
+      "site_fit_score": 1,
+      "site_policy": {
+        "confidence": 98,
+        "fit_label": "Unsafe Fit",
+        "fit_score": 1,
+        "form_behavior": [
+          "SSO/MFA state matters",
+          "Connected app review",
+          "Team data exposure"
+        ],
+        "generator_preset": "Work",
+        "headline": "Unsafe Fit: not ready for Work / Business App. Fix the top blockers first.",
+        "mfa_hint": "Enable MFA and review connected apps after rotation.",
+        "must_fix": [
+          "Make it at least 16 characters; target 22+.",
+          "Underlying password strength is weak; generate a fresh value.",
+          "Rotate immediately: breach/common-password signal is not acceptable for this site profile."
+        ],
+        "passed_checks": [
+          "Includes lowercase characters.",
+          "Includes uppercase characters.",
+          "Includes digit characters.",
+          "Includes symbol characters.",
+          "No obvious site/name/email word detected."
+        ],
+        "profile": "Work / Business App",
+        "recommended_length": 22,
+        "requirements": [
+          "Minimum length 16+ characters",
+          "Recommended length 22+ characters for Work / Business App",
+          "Contains lowercase letters",
+          "Contains uppercase letters",
+          "Contains digits",
+          "Contains symbols",
+          "Use symbols unless the service rejects them; integrations should be reviewed.",
+          "Unique password; no reuse across accounts",
+          "MFA/passkey should be enabled outside the vault"
+        ],
+        "risk_tier": "High",
+        "site_reason": "Work accounts can expose private projects and team data.",
+        "symbol_guidance": "Use symbols unless the service rejects them; integrations should be reviewed.",
+        "warnings": []
+      },
+      "site_profile": "Work / Business App",
+      "title": "Credential #1",
+      "username": "",
+      "website": ""
+    },
+    {
+      "breached": false,
+      "category": "Admin",
+      "common_password": false,
+      "id": 2,
+      "intelligence": {
+        "breached": false,
+        "common_password": false,
+        "effective_entropy_bits": 71.9,
+        "entropy_bits": 71.9,
+        "explanation": "No breach or common-password hit was found in the local intelligence checks.",
+        "fix_recommendations": [
+          "Generate a 16+ character password with uppercase, lowercase, digits, and symbols."
+        ],
+        "label": "Very Weak",
+        "old_password": false,
+        "patterns": [
+          "Context-based password",
+          "Dictionary suffix pattern",
+          "Dictionary words",
+          "Passphrase model",
+          "Short sequence",
+          "Weak base word"
+        ],
+        "raw_entropy_bits": 163.9,
+        "remediation_advice": "Use at least four random words for a stronger passphrase model.",
+        "reuse_count": 1,
+        "risk_level": "Critical",
+        "score": 23,
+        "score_cap": 58,
+        "score_cap_reason": "dictionary word with predictable suffix",
+        "severity": "danger",
+        "site_fit_label": "Needs Tune-up",
+        "site_fit_score": 73,
+        "site_policy": {
+          "confidence": 98,
+          "fit_label": "Needs Tune-up",
+          "fit_score": 73,
+          "form_behavior": [
+            "Strict login risk",
+            "API tokens may remain active after password rotation",
+            "Session revocation should be verified manually"
+          ],
+          "generator_preset": "Recovery",
+          "headline": "Needs Tune-up: not ready for Infrastructure / Admin Console. Fix the top blockers first.",
+          "mfa_hint": "Use MFA/hardware key and revoke old sessions or API tokens after rotation.",
+          "must_fix": [
+            "Underlying password strength is weak; generate a fresh value."
+          ],
+          "passed_checks": [
+            "Includes lowercase characters.",
+            "Includes uppercase characters.",
+            "Includes digit characters.",
+            "Includes symbol characters.",
+            "No obvious site/name/email word detected."
+          ],
+          "profile": "Infrastructure / Admin Console",
+          "recommended_length": 26,
+          "requirements": [
+            "Minimum length 18+ characters",
+            "Recommended length 26+ characters for Infrastructure / Admin Console",
+            "Contains lowercase letters",
+            "Contains uppercase letters",
+            "Contains digits",
+            "Contains symbols",
+            "Symbols are expected for admin-grade generated secrets.",
+            "Unique password; no reuse across accounts",
+            "MFA/passkey should be enabled outside the vault"
+          ],
+          "risk_tier": "Critical",
+          "site_reason": "Admin and infrastructure accounts can lead to lateral movement, service takeover, and data exposure.",
+          "symbol_guidance": "Symbols are expected for admin-grade generated secrets.",
+          "warnings": [
+            "Length is acceptable, but Infrastructure / Admin Console is better with 26+ characters."
+          ]
+        },
+        "site_profile": "Infrastructure / Admin Console",
+        "suggestions": [
+          "Use at least four random words for a stronger passphrase model.",
+          "Replace predictable words, dates, keyboard walks, or context terms with a generated random value.",
+          "Use the generator to create a unique 16+ character password for this account."
+        ],
+        "title": "Credential #2",
+        "username": "",
+        "warnings": [
+          "Short alphabetic or numeric sequence detected.",
+          "Dictionary token(s) detected: admin, portal.",
+          "Dictionary word with predictable numeric/symbol suffix detected.",
+          "Passphrase model: 3 word(s), conservative wordlist estimate 27.0 bits. This is a heuristic; strength depends on whether the words were randomly generated.",
+          "Password appears related to account/site context."
+        ],
+        "website": "",
+        "why_matters": [
+          "Weak entropy and predictable patterns reduce the effort required to guess the password."
+        ]
+      },
+      "issues": [
+        "Short alphabetic or numeric sequence detected.",
+        "Dictionary token(s) detected: admin, portal.",
+        "Dictionary word with predictable numeric/symbol suffix detected.",
+        "Passphrase model: 3 word(s), conservative wordlist estimate 27.0 bits. This is a heuristic; strength depends on whether the words were randomly generated.",
+        "Password appears related to account/site context."
+      ],
+      "label": "Very Weak",
+      "old_password": false,
+      "reuse_count": 1,
+      "risk_level": "Critical",
+      "score": 23,
+      "site_fit_label": "Needs Tune-up",
+      "site_fit_score": 73,
+      "site_policy": {
+        "confidence": 98,
+        "fit_label": "Needs Tune-up",
+        "fit_score": 73,
+        "form_behavior": [
+          "Strict login risk",
+          "API tokens may remain active after password rotation",
+          "Session revocation should be verified manually"
+        ],
+        "generator_preset": "Recovery",
+        "headline": "Needs Tune-up: not ready for Infrastructure / Admin Console. Fix the top blockers first.",
+        "mfa_hint": "Use MFA/hardware key and revoke old sessions or API tokens after rotation.",
+        "must_fix": [
+          "Underlying password strength is weak; generate a fresh value."
+        ],
+        "passed_checks": [
+          "Includes lowercase characters.",
+          "Includes uppercase characters.",
+          "Includes digit characters.",
+          "Includes symbol characters.",
+          "No obvious site/name/email word detected."
+        ],
+        "profile": "Infrastructure / Admin Console",
+        "recommended_length": 26,
+        "requirements": [
+          "Minimum length 18+ characters",
+          "Recommended length 26+ characters for Infrastructure / Admin Console",
+          "Contains lowercase letters",
+          "Contains uppercase letters",
+          "Contains digits",
+          "Contains symbols",
+          "Symbols are expected for admin-grade generated secrets.",
+          "Unique password; no reuse across accounts",
+          "MFA/passkey should be enabled outside the vault"
+        ],
+        "risk_tier": "Critical",
+        "site_reason": "Admin and infrastructure accounts can lead to lateral movement, service takeover, and data exposure.",
+        "symbol_guidance": "Symbols are expected for admin-grade generated secrets.",
+        "warnings": [
+          "Length is acceptable, but Infrastructure / Admin Console is better with 26+ characters."
+        ]
+      },
+      "site_profile": "Infrastructure / Admin Console",
+      "title": "Credential #2",
+      "username": "",
+      "website": ""
+    }
+  ],
+  "generated_at": "2026-05-09T09:40:39+00:00",
+  "healthy_findings": [],
+  "last_backup": "",
+  "limitations": [
+    "Breach checks use the bundled offline SHA-1 subset only.",
+    "Reports summarize password risk without exporting plaintext passwords.",
+    "Local Security Coach output is deterministic local guidance, not an external LLM verdict."
+  ],
+  "metrics": {
+    "breached": 0,
+    "duplicate_sites": 0,
+    "duplicate_usernames": 0,
+    "health_score": 20,
+    "missing_fields": 0,
+    "old": 0,
+    "reused_passwords": 0,
+    "total": 2,
+    "trashed": 0,
+    "weak": 2
+  },
+  "owner_name": "Redacted Owner",
+  "payload_hash": "4e7aa6593f974a668294b839a282f7d39c087491ab00ef96f27324319f82643b",
+  "privacy_level": "minimal",
+  "privacy_safe": true,
+  "recommendations": [
+    "Replace 2 weak password(s) with 16+ character generated passwords."
+  ],
+  "report_hash": "4e7aa6593f974a668294b839a282f7d39c087491ab00ef96f27324319f82643b",
+  "risk_distribution": {
+    "Critical": 2,
+    "High": 0,
+    "Low": 0,
+    "Moderate": 0
+  },
+  "score_breakdown": [
+    {
+      "count": 2,
+      "impact_per_account": 10.0,
+      "label": "Weak passwords",
+      "penalty_each": 10,
+      "raw_penalty": 20
+    }
+  ],
+  "strengths": [
+    "No passwords matched the local offline breach dataset.",
+    "No password reuse was detected across stored credentials.",
+    "No credentials are past the 90-day rotation window.",
+    "Metadata is complete across the active vault entries."
+  ],
+  "top_priority": [
+    {
+      "breached": false,
+      "category": "Work",
+      "common_password": true,
+      "id": 1,
+      "intelligence": {
+        "breached": false,
+        "common_password": true,
+        "effective_entropy_bits": 0.0,
+        "entropy_bits": 0.0,
+        "explanation": "It also matches a known common password pattern.",
+        "fix_recommendations": [
+          "Rotate this password immediately.",
+          "Generate a 16+ character password with uppercase, lowercase, digits, and symbols."
+        ],
+        "label": "Very Weak",
+        "old_password": false,
+        "patterns": [
+          "Dictionary suffix pattern",
+          "Dictionary words",
+          "Season pattern",
+          "Weak base word",
+          "Year suffix"
+        ],
+        "raw_entropy_bits": 78.7,
+        "remediation_advice": "Consider a 16+ character password or passphrase.",
+        "reuse_count": 1,
+        "risk_level": "Critical",
+        "score": 16,
+        "score_cap": 50,
+        "score_cap_reason": "season/month plus year or predictable suffix",
+        "severity": "danger",
+        "site_fit_label": "Unsafe Fit",
+        "site_fit_score": 1,
+        "site_policy": {
+          "confidence": 98,
+          "fit_label": "Unsafe Fit",
+          "fit_score": 1,
+          "form_behavior": [
+            "SSO/MFA state matters",
+            "Connected app review",
+            "Team data exposure"
+          ],
+          "generator_preset": "Work",
+          "headline": "Unsafe Fit: not ready for Work / Business App. Fix the top blockers first.",
+          "mfa_hint": "Enable MFA and review connected apps after rotation.",
+          "must_fix": [
+            "Make it at least 16 characters; target 22+.",
+            "Underlying password strength is weak; generate a fresh value.",
+            "Rotate immediately: breach/common-password signal is not acceptable for this site profile."
+          ],
+          "passed_checks": [
+            "Includes lowercase characters.",
+            "Includes uppercase characters.",
+            "Includes digit characters.",
+            "Includes symbol characters.",
+            "No obvious site/name/email word detected."
+          ],
+          "profile": "Work / Business App",
+          "recommended_length": 22,
+          "requirements": [
+            "Minimum length 16+ characters",
+            "Recommended length 22+ characters for Work / Business App",
+            "Contains lowercase letters",
+            "Contains uppercase letters",
+            "Contains digits",
+            "Contains symbols",
+            "Use symbols unless the service rejects them; integrations should be reviewed.",
+            "Unique password; no reuse across accounts",
+            "MFA/passkey should be enabled outside the vault"
+          ],
+          "risk_tier": "High",
+          "site_reason": "Work accounts can expose private projects and team data.",
+          "symbol_guidance": "Use symbols unless the service rejects them; integrations should be reviewed.",
+          "warnings": []
+        },
+        "site_profile": "Work / Business App",
+        "suggestions": [
+          "Consider a 16+ character password or passphrase.",
+          "Replace predictable words, dates, keyboard walks, or context terms with a generated random value.",
+          "Use the generator to create a unique 16+ character password for this account."
+        ],
+        "title": "Credential #1",
+        "username": "",
+        "warnings": [
+          "Ends with a year-like suffix.",
+          "Season/month word detected; these are common password bases.",
+          "Dictionary token(s) detected: summer.",
+          "Dictionary word with predictable numeric/symbol suffix detected.",
+          "Effective entropy is low after removing predictable pattern value."
+        ],
+        "website": "",
+        "why_matters": [
+          "Attackers prioritize leaked and common passwords during credential stuffing and password spraying.",
+          "Weak entropy and predictable patterns reduce the effort required to guess the password."
+        ]
+      },
+      "issues": [
+        "Ends with a year-like suffix.",
+        "Season/month word detected; these are common password bases.",
+        "Dictionary token(s) detected: summer.",
+        "Dictionary word with predictable numeric/symbol suffix detected.",
+        "Effective entropy is low after removing predictable pattern value.",
+        "Below inferred site-policy fit: Work / Business App (1/100)."
+      ],
+      "label": "Very Weak",
+      "old_password": false,
+      "reuse_count": 1,
+      "risk_level": "Critical",
+      "score": 16,
+      "site_fit_label": "Unsafe Fit",
+      "site_fit_score": 1,
+      "site_policy": {
+        "confidence": 98,
+        "fit_label": "Unsafe Fit",
+        "fit_score": 1,
+        "form_behavior": [
+          "SSO/MFA state matters",
+          "Connected app review",
+          "Team data exposure"
+        ],
+        "generator_preset": "Work",
+        "headline": "Unsafe Fit: not ready for Work / Business App. Fix the top blockers first.",
+        "mfa_hint": "Enable MFA and review connected apps after rotation.",
+        "must_fix": [
+          "Make it at least 16 characters; target 22+.",
+          "Underlying password strength is weak; generate a fresh value.",
+          "Rotate immediately: breach/common-password signal is not acceptable for this site profile."
+        ],
+        "passed_checks": [
+          "Includes lowercase characters.",
+          "Includes uppercase characters.",
+          "Includes digit characters.",
+          "Includes symbol characters.",
+          "No obvious site/name/email word detected."
+        ],
+        "profile": "Work / Business App",
+        "recommended_length": 22,
+        "requirements": [
+          "Minimum length 16+ characters",
+          "Recommended length 22+ characters for Work / Business App",
+          "Contains lowercase letters",
+          "Contains uppercase letters",
+          "Contains digits",
+          "Contains symbols",
+          "Use symbols unless the service rejects them; integrations should be reviewed.",
+          "Unique password; no reuse across accounts",
+          "MFA/passkey should be enabled outside the vault"
+        ],
+        "risk_tier": "High",
+        "site_reason": "Work accounts can expose private projects and team data.",
+        "symbol_guidance": "Use symbols unless the service rejects them; integrations should be reviewed.",
+        "warnings": []
+      },
+      "site_profile": "Work / Business App",
+      "title": "Credential #1",
+      "username": "",
+      "website": ""
+    },
+    {
+      "breached": false,
+      "category": "Admin",
+      "common_password": false,
+      "id": 2,
+      "intelligence": {
+        "breached": false,
+        "common_password": false,
+        "effective_entropy_bits": 71.9,
+        "entropy_bits": 71.9,
+        "explanation": "No breach or common-password hit was found in the local intelligence checks.",
+        "fix_recommendations": [
+          "Generate a 16+ character password with uppercase, lowercase, digits, and symbols."
+        ],
+        "label": "Very Weak",
+        "old_password": false,
+        "patterns": [
+          "Context-based password",
+          "Dictionary suffix pattern",
+          "Dictionary words",
+          "Passphrase model",
+          "Short sequence",
+          "Weak base word"
+        ],
+        "raw_entropy_bits": 163.9,
+        "remediation_advice": "Use at least four random words for a stronger passphrase model.",
+        "reuse_count": 1,
+        "risk_level": "Critical",
+        "score": 23,
+        "score_cap": 58,
+        "score_cap_reason": "dictionary word with predictable suffix",
+        "severity": "danger",
+        "site_fit_label": "Needs Tune-up",
+        "site_fit_score": 73,
+        "site_policy": {
+          "confidence": 98,
+          "fit_label": "Needs Tune-up",
+          "fit_score": 73,
+          "form_behavior": [
+            "Strict login risk",
+            "API tokens may remain active after password rotation",
+            "Session revocation should be verified manually"
+          ],
+          "generator_preset": "Recovery",
+          "headline": "Needs Tune-up: not ready for Infrastructure / Admin Console. Fix the top blockers first.",
+          "mfa_hint": "Use MFA/hardware key and revoke old sessions or API tokens after rotation.",
+          "must_fix": [
+            "Underlying password strength is weak; generate a fresh value."
+          ],
+          "passed_checks": [
+            "Includes lowercase characters.",
+            "Includes uppercase characters.",
+            "Includes digit characters.",
+            "Includes symbol characters.",
+            "No obvious site/name/email word detected."
+          ],
+          "profile": "Infrastructure / Admin Console",
+          "recommended_length": 26,
+          "requirements": [
+            "Minimum length 18+ characters",
+            "Recommended length 26+ characters for Infrastructure / Admin Console",
+            "Contains lowercase letters",
+            "Contains uppercase letters",
+            "Contains digits",
+            "Contains symbols",
+            "Symbols are expected for admin-grade generated secrets.",
+            "Unique password; no reuse across accounts",
+            "MFA/passkey should be enabled outside the vault"
+          ],
+          "risk_tier": "Critical",
+          "site_reason": "Admin and infrastructure accounts can lead to lateral movement, service takeover, and data exposure.",
+          "symbol_guidance": "Symbols are expected for admin-grade generated secrets.",
+          "warnings": [
+            "Length is acceptable, but Infrastructure / Admin Console is better with 26+ characters."
+          ]
+        },
+        "site_profile": "Infrastructure / Admin Console",
+        "suggestions": [
+          "Use at least four random words for a stronger passphrase model.",
+          "Replace predictable words, dates, keyboard walks, or context terms with a generated random value.",
+          "Use the generator to create a unique 16+ character password for this account."
+        ],
+        "title": "Credential #2",
+        "username": "",
+        "warnings": [
+          "Short alphabetic or numeric sequence detected.",
+          "Dictionary token(s) detected: admin, portal.",
+          "Dictionary word with predictable numeric/symbol suffix detected.",
+          "Passphrase model: 3 word(s), conservative wordlist estimate 27.0 bits. This is a heuristic; strength depends on whether the words were randomly generated.",
+          "Password appears related to account/site context."
+        ],
+        "website": "",
+        "why_matters": [
+          "Weak entropy and predictable patterns reduce the effort required to guess the password."
+        ]
+      },
+      "issues": [
+        "Short alphabetic or numeric sequence detected.",
+        "Dictionary token(s) detected: admin, portal.",
+        "Dictionary word with predictable numeric/symbol suffix detected.",
+        "Passphrase model: 3 word(s), conservative wordlist estimate 27.0 bits. This is a heuristic; strength depends on whether the words were randomly generated.",
+        "Password appears related to account/site context."
+      ],
+      "label": "Very Weak",
+      "old_password": false,
+      "reuse_count": 1,
+      "risk_level": "Critical",
+      "score": 23,
+      "site_fit_label": "Needs Tune-up",
+      "site_fit_score": 73,
+      "site_policy": {
+        "confidence": 98,
+        "fit_label": "Needs Tune-up",
+        "fit_score": 73,
+        "form_behavior": [
+          "Strict login risk",
+          "API tokens may remain active after password rotation",
+          "Session revocation should be verified manually"
+        ],
+        "generator_preset": "Recovery",
+        "headline": "Needs Tune-up: not ready for Infrastructure / Admin Console. Fix the top blockers first.",
+        "mfa_hint": "Use MFA/hardware key and revoke old sessions or API tokens after rotation.",
+        "must_fix": [
+          "Underlying password strength is weak; generate a fresh value."
+        ],
+        "passed_checks": [
+          "Includes lowercase characters.",
+          "Includes uppercase characters.",
+          "Includes digit characters.",
+          "Includes symbol characters.",
+          "No obvious site/name/email word detected."
+        ],
+        "profile": "Infrastructure / Admin Console",
+        "recommended_length": 26,
+        "requirements": [
+          "Minimum length 18+ characters",
+          "Recommended length 26+ characters for Infrastructure / Admin Console",
+          "Contains lowercase letters",
+          "Contains uppercase letters",
+          "Contains digits",
+          "Contains symbols",
+          "Symbols are expected for admin-grade generated secrets.",
+          "Unique password; no reuse across accounts",
+          "MFA/passkey should be enabled outside the vault"
+        ],
+        "risk_tier": "Critical",
+        "site_reason": "Admin and infrastructure accounts can lead to lateral movement, service takeover, and data exposure.",
+        "symbol_guidance": "Symbols are expected for admin-grade generated secrets.",
+        "warnings": [
+          "Length is acceptable, but Infrastructure / Admin Console is better with 26+ characters."
+        ]
+      },
+      "site_profile": "Infrastructure / Admin Console",
+      "title": "Credential #2",
+      "username": "",
+      "website": ""
+    }
+  ],
+  "vault_name": "CyberVault Privacy-Safe Report"
+}

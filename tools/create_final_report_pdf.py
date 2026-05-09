@@ -65,7 +65,7 @@ def table(data, widths=None):
 story = []
 story.append(Spacer(1, 1.0*cm))
 story.append(p('CyberVault X', 'TitleX'))
-story.append(p('Secure Password Manager with End-to-End Encryption', 'SubtitleX'))
+story.append(p('Secure Password Manager with Local Encryption at Rest', 'SubtitleX'))
 story.append(p('<b>Version:</b> 5.7.2 Strict Final Review<br/><b>Course:</b> CET334 - Cryptographic Algorithms & Protocols<br/><b>Project:</b> Project 4 - Secure Password Manager<br/><b>Delivery:</b> working desktop application, code, tests, documentation, presentation, and live demo.', 'BodyX'))
 story.append(Spacer(1, 0.45*cm))
 story.append(table([
@@ -73,15 +73,15 @@ story.append(table([
     ['Encrypted Password Vault', 'AES-GCM field encryption before SQLite storage.'],
     ['Master Password Protection', 'PBKDF2-SHA256 with password policy and unlock throttling.'],
     ['Password Generation', 'Configurable generator with entropy feedback.'],
-    ['Breach Detection', 'Offline SHA1 breach hash list for local checks.'],
+    ['Offline Demo Breach-Subset Check', 'Offline SHA1 breach hash list for local checks.'],
     ['Strength Analysis', 'Weak, reused, breached, stale, and metadata risk scoring.'],
 ], [5.2*cm, 10.4*cm]))
 story.append(PageBreak())
 
 sections = [
-    ('1. Executive Summary', 'CyberVault X is a local-first password manager designed to protect user credentials using end-to-end encryption, master-password protection, password generation, breach checking, and security posture analysis. It satisfies the original academic requirements and adds a professional product layer: AI Guardian, Security Proof Center, encrypted backups, tamper-evident audit logs, privacy-safe reports, and report-package verification.'),
+    ('1. Executive Summary', 'CyberVault X is a local-first password manager designed to protect user credentials using local encryption at rest, master-password protection, password generation, breach checking, and security posture analysis. It satisfies the original academic requirements and adds a commercial-style academic product layer: AI-style Local Security Coach, Security Proof Center, encrypted backups, local audit hash-chain integrity checks, privacy-safe reports, and local report-package verification.'),
     ('2. Problem Statement', 'Users often reuse weak passwords across many services. When one service is breached, attackers can use credential stuffing to compromise other accounts. CyberVault X reduces this risk by storing credentials safely, generating strong passwords, warning about weak/reused/breached passwords, and guiding the user through remediation.'),
-    ('3. Project Objectives', 'The project objectives are: build an encrypted vault, protect it with a master password, use AES-GCM for authenticated encryption, provide a strong password generator, perform offline breach detection, generate safe reports, and provide proof screens that demonstrate the security controls during the live demo.'),
+    ('3. Project Objectives', 'The project objectives are: build an encrypted vault, protect it with a master password, use AES-GCM for authenticated encryption, provide a strong password generator, perform offline offline demo breach-subset detection, generate safe reports, and provide proof screens that demonstrate the security controls during the live demo.'),
 ]
 for title, body in sections:
     story.append(p(title, 'H1X'))
@@ -106,7 +106,7 @@ story.append(table([
     ['Layer', 'Responsibility'],
     ['UI', 'Desktop screens, dialogs, workflow controls, presentation mode.'],
     ['Manager', 'Vault actions, authentication, settings, and service coordination.'],
-    ['Services', 'Backup, reporting, AI Guardian, proof checks, and product intelligence.'],
+    ['Services', 'Backup, reporting, AI-style Local Security Coach, proof checks, and product intelligence.'],
     ['Crypto', 'AES-GCM, backup encryption, master verification, passphrase policy.'],
     ['Database', 'SQLite schema, migrations, metadata, credentials, history, audit logs.'],
 ], [4.2*cm, 11.8*cm]))
@@ -127,7 +127,7 @@ story.append(table([
     ['Feature', 'Value'],
     ['Encrypted Vault', 'Add, edit, delete, restore, and search credentials while keeping sensitive fields encrypted at rest.'],
     ['Security Center', 'Detect weak, reused, breached, stale, and metadata-incomplete credentials.'],
-    ['AI Guardian', 'Local deterministic advisor that turns findings into prioritized actions and attacker-view explanations.'],
+    ['AI-style Local Security Coach', 'Local deterministic advisor that turns findings into prioritized actions and attacker-view explanations.'],
     ['Security Proof Center', 'Verifies encrypted schema, AAD posture, audit chain, report package, and backup preview.'],
     ['Tamper-Evident Audit', 'Activity events are linked with hashes to detect modification, deletion, or reordering.'],
     ['Privacy-Safe Reports', 'Exports executive evidence without raw passwords and with manifest hashes.'],
@@ -135,14 +135,14 @@ story.append(table([
 story.append(PageBreak())
 
 story.append(p('8. Database Design', 'H1X'))
-story.append(p('The SQLite database contains app metadata, encrypted credentials, encrypted credential history, tamper-evident activity logs, and schema migration tracking. The schema avoids plaintext password columns and supports future migrations.', 'BodyX'))
+story.append(p('The SQLite database contains app metadata, encrypted credentials, encrypted credential history, local audit hash-chain activity logs, and schema migration tracking. The schema avoids plaintext password columns and supports future migrations.', 'BodyX'))
 story.append(p('9. Testing and Validation', 'H1X'))
-story.append(p('Automated tests cover encryption, AAD protections, backup roundtrip, backup rollback, report manifest verification, AI Guardian redaction, security scoring, and audit-chain behavior.', 'BodyX'))
+story.append(p('Automated tests cover encryption, AAD protections, backup roundtrip, backup rollback, report manifest verification, AI-style Local Security Coach redaction, security scoring, and audit-chain behavior.', 'BodyX'))
 story.append(p('Recommended commands:', 'BodyX'))
 story.append(p('python -m pytest -q tests<br/>python tools/release_preflight.py<br/>build_release.bat', 'CodeX'))
 
 story.append(p('10. Live Demo Scenario', 'H1X'))
-story.append(p('Launch the application, create/unlock a vault, load the Assessment Dataset, explain the Dashboard score, review Security Center findings, generate an AI Guardian plan, replace a weak password, open Security Proof Center, export and verify a report package, export an encrypted backup, preview restore impact, and demonstrate panic lock.', 'BodyX'))
+story.append(p('Launch the application, create/unlock a vault, load the Assessment Dataset, explain the Dashboard score, review Security Center findings, generate an AI-style Local Security Coach plan, replace a weak password, open Security Proof Center, export and verify a report package, export an encrypted backup, preview restore impact, and demonstrate panic lock.', 'BodyX'))
 
 story.append(p('11. Limitations', 'H1X'))
 story.append(table([

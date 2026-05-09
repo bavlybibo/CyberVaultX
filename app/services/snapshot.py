@@ -23,7 +23,7 @@ class VaultSnapshot:
 
     The snapshot lives only in memory and is invalidated after every mutating
     vault operation. It prevents repeated decrypt/recalculate cycles across the
-    dashboard, Security Center, AI Guardian, and reports.
+    dashboard, Security Center, AI-style Local Security Coach, and reports.
     """
 
     created_at: str

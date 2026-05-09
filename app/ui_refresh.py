@@ -23,25 +23,51 @@ from .core.system_health import collect_system_health, summarize_health
 
 class RefreshMixin:
     def refresh_all(self, *, select_id: int | None = None) -> None:
+        # Keep the UI responsive: refresh shared identity/metrics every time,
+        # then refresh the current workspace first.  Heavy support pages are only
+        # refreshed when visible; this avoids rebuilding every table/chart after
+        # each small status update.
         self._refresh_identity()
         self._refresh_metrics()
-        self._refresh_table(select_id=select_id)
-        self._refresh_filter_chips()
-        self._refresh_security()
-        self._refresh_ai_guardian()
-        self._refresh_trash()
-        self._refresh_logs()
-        self._refresh_dashboard()
-        self._refresh_settings_metadata()
-        self._refresh_reports_and_backup()
-        self._refresh_system_health()
-        self._refresh_about()
+        page = getattr(self, 'current_page', 'dashboard')
+
+        if page in {'vault', 'dashboard', 'generator'}:
+            self._refresh_table(select_id=select_id)
+            self._refresh_filter_chips()
+        if page in {'dashboard', 'security'}:
+            self._refresh_security()
+        if page in {'dashboard', 'ai_guardian'}:
+            self._refresh_ai_guardian()
+        if page == 'trash':
+            self._refresh_trash()
+        if page == 'activity':
+            self._refresh_logs()
+        if page == 'dashboard':
+            self._refresh_dashboard()
+        elif page == 'security':
+            # Dashboard cards are not visible, but metrics/security visuals are.
+            pass
+        elif page == 'ai_guardian':
+            pass
+        if page == 'settings':
+            self._refresh_settings_metadata()
+        if page in {'reports', 'backup_recovery'}:
+            self._refresh_reports_and_backup()
+        if page == 'system_health':
+            self._refresh_system_health()
+        if page == 'about':
+            self._refresh_about()
         self._on_activity()
 
     def _refresh_identity(self) -> None:
         self.owner_var.set(f'Owner: {self.manager.owner_name}')
         self.vault_var.set(self.manager.vault_name)
-        self.state_var.set('Status: Unlocked' if self.manager.is_unlocked else 'Status: Locked')
+        state = 'Status: Unlocked' if self.manager.is_unlocked else 'Status: Locked'
+        if getattr(self.manager, 'is_demo_vault', False):
+            state += ' · DEMO VAULT'
+        self.state_var.set(state)
+        if hasattr(self, 'demo_banner_var'):
+            self.demo_banner_var.set(getattr(self.manager, 'demo_vault_banner', '') or '')
 
     def _refresh_metrics(self) -> None:
         metrics = self.manager.dashboard()
@@ -125,17 +151,38 @@ class RefreshMixin:
         if not hasattr(self, 'ai_priority_tree'):
             return
         plan = self.manager.ai_security_plan(persist_snapshot=persist_snapshot)
-        self.ai_summary_var.set(plan.get('executive_summary', 'AI Guardian summary unavailable.'))
+        self.ai_summary_var.set(plan.get('executive_summary', 'Local Security Coach summary unavailable.'))
         self.ai_generated_var.set(f"Generated: {self._fmt_dt(plan.get('generated_at', ''))}")
-        self.ai_mode_var.set(f"Mode: {plan.get('mode', 'Local-first AI Guardian rules')}")
+        self.ai_mode_var.set(f"Mode: {plan.get('mode', 'Local-first Local Security Coach rules')}")
         self.ai_privacy_var.set(f"Privacy: {plan.get('privacy_notice', 'No secrets are included.')}")
         coach_overview = plan.get('coach_overview', {}) or {}
+        risk_fusion = plan.get('risk_fusion_summary', {}) or {}
+        guardrails = plan.get('guardrail_summary', {}) or {}
+        workflow = plan.get('guided_remediation_workflow', {}) or {}
+        graph = plan.get('signal_relationship_graph', {}) or {}
+        limits = plan.get('honesty_limits', {}) or {}
         if hasattr(self, 'ai_coach_overview_var'):
-            self.ai_coach_overview_var.set(f"{coach_overview.get('readiness', 'AI coach ready')}: {coach_overview.get('overview', 'No overview generated yet.')}")
+            self.ai_coach_overview_var.set(f"{coach_overview.get('readiness', 'Local coach ready')}: {coach_overview.get('overview', 'No overview generated yet.')}")
         if hasattr(self, 'ai_first_action_var'):
             self.ai_first_action_var.set(f"First user action: {coach_overview.get('first_action', 'Generate plan, then remediate the top queue item.')}")
         if hasattr(self, 'ai_site_mix_var'):
             self.ai_site_mix_var.set(f"Site profile mix: {coach_overview.get('site_mix', 'waiting for vault data')}")
+        if hasattr(self, 'ai_fusion_var'):
+            self.ai_fusion_var.set(str(risk_fusion.get('narrative', 'Risk fusion waiting for local telemetry.')))
+        if hasattr(self, 'ai_guardrail_var'):
+            self.ai_guardrail_var.set(f"{guardrails.get('status', 'WAIT')}: {guardrails.get('narrative', guardrails.get('privacy', 'Guardrails waiting.'))}")
+        if hasattr(self, 'ai_top_signal_var'):
+            self.ai_top_signal_var.set(f"Top signal: {risk_fusion.get('top_signal', 'n/a')} · Avg confidence {risk_fusion.get('average_confidence', 0)}%")
+        if hasattr(self, 'ai_workflow_var'):
+            lanes = workflow.get('lanes', []) or []
+            hot_lanes = [lane.get('lane', '-') for lane in lanes if lane.get('status') in {'HOT', 'ACTIVE', 'READY'}]
+            self.ai_workflow_var.set(f"{workflow.get('narrative', 'Workflow waiting.')} Active lanes: {', '.join(hot_lanes[:2]) or 'none yet'}.")
+        if hasattr(self, 'ai_graph_var'):
+            self.ai_graph_var.set(f"{graph.get('narrative', 'Signal graph waiting.')} Nodes {graph.get('node_count', 0)} · Edges {graph.get('edge_count', 0)}.")
+        if hasattr(self, 'ai_truth_var'):
+            self.ai_truth_var.set(f"{limits.get('title', 'Deterministic local coach')}: {limits.get('review_status', 'Verify before export.')}")
+        if hasattr(self, 'ai_checkpoint_var'):
+            self.ai_checkpoint_var.set(str(workflow.get('next_checkpoint', 'Generate plan, fix top item, verify, export evidence.')))
 
         risk_cards = plan.get('risk_cards', {})
         for level in ('Critical', 'High', 'Moderate', 'Low'):
@@ -196,6 +243,29 @@ class RefreshMixin:
                 lines.append(f'• UX prompt: {prompt}')
             lines.append('')
 
+        lines.append('Guided Remediation Workflow')
+        lines.append(f"• {workflow.get('narrative', 'Workflow waiting.')}")
+        lines.append(f"• Next checkpoint: {workflow.get('next_checkpoint', '-')}")
+        for lane in workflow.get('lanes', [])[:4]:
+            lines.append(f"• {lane.get('lane', '-')}: {lane.get('status', '-')}")
+            for task in lane.get('tasks', [])[:2]:
+                lines.append(f"  - {task}")
+        lines.append('')
+
+        lines.append('Signal Relationship Graph')
+        lines.append(f"• {graph.get('narrative', 'Signal graph waiting.')}")
+        for signal in graph.get('top_signals', [])[:4]:
+            lines.append(f"• {signal.get('signal', '-').replace('_', ' ')}: {signal.get('count', 0)} hit(s), weight {signal.get('weight', 0)}")
+        lines.append('')
+
+        lines.append('Honest Limits')
+        for claim in limits.get('claims', [])[:2]:
+            lines.append(f"• Claim: {claim}")
+        for limit in limits.get('limits', [])[:2]:
+            lines.append(f"• Limit: {limit}")
+        lines.append(f"• Review: {limits.get('review_status', '-')}")
+        lines.append('')
+
         lines.append('What Changed')
         for item in plan.get('change_summary', []):
             lines.append(f'• {item}')
@@ -212,13 +282,22 @@ class RefreshMixin:
         lines.append('')
 
         if plan.get('priority_items'):
-            lines.append('AI Guardian v3 Evidence Details')
+            lines.append('Local Security Coach v7 Evidence Details')
             for item in plan.get('priority_items', [])[:3]:
                 lines.append(f"• {item.get('credential_ref', 'Credential')}: {item.get('attack_scenario', '')}")
-                lines.append(f"  Signal: {item.get('primary_signal', 'n/a')} | Confidence: {item.get('confidence_percent', 0)}% | Urgency: {item.get('urgency_score', 0)}/100")
+                lines.append(f"  Signal: {item.get('primary_signal', 'n/a')} | Confidence: {item.get('confidence_percent', 0)}% ({item.get('confidence_band', 'heuristic')}) | Urgency: {item.get('urgency_score', 0)}/100")
                 lines.append(f"  Exposure path: {item.get('exposure_path', 'n/a')}")
                 lines.append(f"  Business impact: {item.get('business_impact', '')}")
+                lines.append(f"  Risk interlocks: {'; '.join(item.get('risk_interlocks', [])[:2])}")
+                lines.append(f"  Control gaps: {'; '.join(item.get('control_gaps', [])[:2])}")
                 lines.append(f"  Evidence: {', '.join(item.get('evidence_tags', [])[:4])}")
+                playbook = item.get('remediation_playbook', {}) or {}
+                if playbook:
+                    lines.append('  Do now: ' + ' → '.join(playbook.get('do_now', [])[:2]))
+                    lines.append('  Verify: ' + ' → '.join(playbook.get('verify', [])[:2]))
+                questions = item.get('verification_questions', [])
+                if questions:
+                    lines.append('  Analyst check: ' + questions[0])
                 lines.append(f"  Expected gain: +{item.get('expected_score_gain', 0)}")
             lines.append('')
 
@@ -239,15 +318,34 @@ class RefreshMixin:
                 decision_lines.append(f"  Why: {row.get('why', '')}")
                 decision_lines.append(f"  Next: {row.get('next_step', '')}")
             decision_lines.append('')
+            decision_lines.append('Risk Fusion')
+            if risk_fusion:
+                decision_lines.append(f"• {risk_fusion.get('narrative', '')}")
+                decision_lines.append(f"• Multi-signal collisions: {risk_fusion.get('multi_signal_collisions', 0)}")
+            decision_lines.append('')
+            decision_lines.append('Signal Graph')
+            decision_lines.append(f"• {graph.get('narrative', '')}")
+            for signal in graph.get('top_signals', [])[:4]:
+                decision_lines.append(f"• {signal.get('signal', '-').replace('_', ' ')}: {signal.get('count', 0)} item(s)")
+            decision_lines.append('')
             decision_lines.append('Posture Heatmap')
             for row in plan.get('posture_heatmap', []):
                 decision_lines.append(f"• {row.get('area', '-')}: {row.get('heat', '-')} ({row.get('count', 0)}) — {row.get('guidance', '')}")
             self._set_text(self.ai_decision_text, '\n'.join(decision_lines).strip() or 'No decision matrix available yet.')
         if hasattr(self, 'ai_quality_text'):
             quality_lines = [f"• {row.get('gate', '-')}: {row.get('status', '-')} — {row.get('detail', '')}" for row in plan.get('quality_gates', [])]
+            if guardrails:
+                quality_lines.append(f"• Guardrail summary: {guardrails.get('status', '-')} — {guardrails.get('privacy', '')}")
+                quality_lines.append(f"• Low-confidence review queue: {guardrails.get('low_confidence_items', 0)} item(s)")
+            if limits:
+                quality_lines.append(f"• Honesty mode: {limits.get('title', 'deterministic local coach')}")
+                for limit in limits.get('limits', [])[:2]:
+                    quality_lines.append(f"  Limit: {limit}")
             self._set_text(self.ai_quality_text, '\n'.join(quality_lines) or 'Quality gates are waiting for vault data.')
         payload = plan.get('optional_llm_payload', {})
         self._set_text(self.ai_llm_payload_text, json.dumps(payload, ensure_ascii=False, indent=2)[:3000])
+        if hasattr(self, '_draw_ai_coach_visuals'):
+            self._draw_ai_coach_visuals(plan)
         if hasattr(self, 'fix_projection_var'):
             self.update_fix_simulator()
 
@@ -304,6 +402,8 @@ class RefreshMixin:
             breakdown_lines = ['• No negative score drivers yet.']
         self._set_text(self.security_score_story, '\n'.join(breakdown_lines))
         self._set_text(self.security_strengths, '\n'.join(f'• {line}' for line in self.manager.strength_highlights(metrics)))
+        if hasattr(self, '_draw_security_visuals'):
+            self._draw_security_visuals(metrics, risk_counts, actionable_findings)
 
     def _refresh_trash(self) -> None:
         items = self.manager.list_credentials(deleted_only=True)
@@ -433,7 +533,7 @@ class RefreshMixin:
         )
         dataset_size = breach_db_size()
         self.breach_dataset_var.set(
-            f"Offline breach dataset: {dataset_size} local SHA1 hash(es). Curated common-password coverage is bundled for stronger offline checks."
+            f"Offline breach dataset: {dataset_size} local SHA1 hash(es). Bundled subset plus optional custom imported hashes; no internet upload is used."
         )
         guard = self.manager.unlock_guard_status()
         if guard.get('blocked'):
@@ -489,6 +589,15 @@ class RefreshMixin:
                         self.report_empty_state.place_forget()
                     else:
                         self.report_empty_state.place(relx=0.5, rely=0.5, anchor='center')
+            if hasattr(self, 'report_readiness_var'):
+                readiness = self.manager.report_readiness_score(privacy_level=self.report_privacy_default_var.get())
+                bits = []
+                if readiness.get('blockers'):
+                    bits.append('blockers present')
+                if readiness.get('warnings'):
+                    bits.append(f"{len(readiness.get('warnings', []))} warning(s)")
+                detail = ', '.join(bits) if bits else 'privacy and verification checks clear'
+                self.report_readiness_var.set(f"Report Readiness: {readiness.get('percentage', 0)}% — {readiness.get('status', 'Unknown')} · {detail}.")
             if hasattr(self, 'report_history_var'):
                 self.report_history_var.set('Recent delivery events are sanitized by the current privacy settings.')
 
@@ -533,7 +642,7 @@ class RefreshMixin:
             'Breach Detection: offline HIBP-style local SHA1 hash set\n'
             f'Offline breach dataset size: {dataset_size} hash(es) bundled locally for offline weak/breached-password checks\n'
             f'Online favicon lookup: {favicon_status}\n'
-            'Recent upgrades: composite AI Guardian risk scoring, privacy-safe reports, hardened favicon lookup, transaction-safe backup import, master-password rotation, secure clipboard clearing, encrypted backup/restore, password history, health scoring, recommendations, duplicate detection, owner branding, accent themes, and audit logs.'
+            'Recent upgrades: composite Local Security Coach risk scoring, privacy-safe reports, hardened favicon lookup, transaction-safe backup import, master-password rotation, secure clipboard clearing, encrypted backup/restore, password history, health scoring, recommendations, duplicate detection, owner branding, accent themes, and audit logs.'
         )
         self.about_var.set(about)
 
@@ -612,7 +721,7 @@ class RefreshMixin:
             issues.append(f'Site-fit needs work: {fit.profile} ({fit.fit_score}/100).')
         self.issue_var.set('Issues: ' + ('; '.join(issues) if issues else 'None detected.'))
         self.site_fit_var.set(f'{fit.fit_score}/100 · {fit.fit_label}')
-        self.site_policy_var.set(f'Site profile: {fit.profile} · Risk tier: {fit.risk_tier} · Confidence: {fit.confidence}%')
+        self.site_policy_var.set(f'Site profile: {fit.profile} · Risk tier: {fit.risk_tier} · Heuristic confidence: {fit.confidence}%')
         self.site_policy_detail_var.set(f'{fit.site_reason} {fit.symbol_guidance}'.strip())
         if hasattr(self, 'site_policy_text'):
             self._set_text(self.site_policy_text, '\n'.join(format_policy_fit_lines(fit)))

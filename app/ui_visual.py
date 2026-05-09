@@ -96,9 +96,37 @@ class VisualMixin:
         self.style.configure('TNotebook.Tab', background=SURFACE_2, foreground=SUBTEXT, padding=(14, 8), font=('Segoe UI Semibold', 10), borderwidth=0)
         self.style.map('TNotebook.Tab', background=[('selected', self.accent), ('active', HOVER)], foreground=[('selected', APP_BG), ('active', TEXT)])
 
-        # Scrollbars for dialogs and long panels.
-        self.style.configure('Vertical.TScrollbar', background=SURFACE_3, troughcolor=PANEL_DEEP, bordercolor=BORDER, arrowcolor=TEXT)
-        self.style.configure('Horizontal.TScrollbar', background=SURFACE_3, troughcolor=PANEL_DEEP, bordercolor=BORDER, arrowcolor=TEXT)
+        # Scrollbars for dialogs and long panels.  Use a custom dark style so
+        # Windows/Linux do not show bright native scrollbars inside dark pages.
+        self.style.configure(
+            'Vertical.TScrollbar',
+            gripcount=0,
+            background=SURFACE_3,
+            troughcolor=PANEL_DEEP,
+            bordercolor=PANEL_DEEP,
+            arrowcolor=MUTED,
+            lightcolor=SURFACE_3,
+            darkcolor=SURFACE_3,
+            relief='flat',
+            width=12,
+        )
+        self.style.map(
+            'Vertical.TScrollbar',
+            background=[('active', self.accent), ('pressed', self.accent)],
+            arrowcolor=[('active', TEXT), ('pressed', TEXT)],
+        )
+        self.style.configure(
+            'Horizontal.TScrollbar',
+            gripcount=0,
+            background=SURFACE_3,
+            troughcolor=PANEL_DEEP,
+            bordercolor=PANEL_DEEP,
+            arrowcolor=MUTED,
+            lightcolor=SURFACE_3,
+            darkcolor=SURFACE_3,
+            relief='flat',
+            width=12,
+        )
 
         self.option_add('*Font', ('Segoe UI', 10))
         self.option_add('*TCombobox*Listbox*Background', INPUT_BG)
@@ -114,6 +142,9 @@ class VisualMixin:
                 self._draw_command_center(draw_score)
 
     def _card(self, parent: tk.Widget, *, bg: str = CARD_BG, padx: int = 18, pady: int = 18, height: int | None = None) -> tk.Frame:
+        # Soft glass card primitive.  The old UI overused hard cyan borders,
+        # which made the app feel noisy and heavy.  This version keeps depth
+        # but uses a subtle border and a slightly darker shell for cleaner pages.
         card = tk.Frame(parent, bg=bg, bd=0, highlightthickness=1, highlightbackground=BORDER_SOFT)
         if height:
             card.configure(height=height)
@@ -123,8 +154,83 @@ class VisualMixin:
         card.inner = inner  # type: ignore[attr-defined]
         return card
 
-    def _label(self, parent: tk.Widget, text: str = '', *, fg: str = TEXT, bg: str | None = None, font=('Segoe UI', 11), wraplength: int | None = None, justify='left', textvariable=None) -> tk.Label:
-        return tk.Label(parent, text=text, textvariable=textvariable, fg=fg, bg=bg or parent.cget('bg'), font=font, wraplength=wraplength, justify=justify, anchor='w')
+    def _glow_card(self, parent: tk.Widget, *, bg: str = CARD_BG, accent: str | None = None, padx: int = 18, pady: int = 18, height: int | None = None) -> tk.Frame:
+        # Highlight cards should guide the eye, not draw a loud rectangle around
+        # every section.  The accent is now a slim left rail instead of a full
+        # hard border + top stripe.
+        outer = tk.Frame(parent, bg=bg, bd=0, highlightthickness=1, highlightbackground=BORDER_SOFT)
+        if height:
+            outer.configure(height=height)
+            outer.pack_propagate(False)
+        shell = tk.Frame(outer, bg=bg)
+        shell.pack(fill='both', expand=True)
+        rail_color = accent or self.accent
+        rail = tk.Frame(shell, bg=rail_color, width=3)
+        rail.pack(side='left', fill='y')
+        inner = tk.Frame(shell, bg=bg, padx=padx, pady=pady)
+        inner.pack(side='left', fill='both', expand=True)
+        outer.inner = inner  # type: ignore[attr-defined]
+        outer.accent_rail = rail  # type: ignore[attr-defined]
+        return outer
+
+    def _mini_stat_card(self, parent: tk.Widget, title: str, variable: tk.StringVar | str, *, accent: str | None = None, subtitle: str = '', icon: str = '•') -> tk.Frame:
+        card = self._glow_card(parent, bg=CARD_BG, accent=accent or self.accent, padx=14, pady=12, height=82)
+        ci = card.inner
+        top = tk.Frame(ci, bg=ci.cget('bg'))
+        top.pack(fill='x')
+        tk.Label(top, text=icon, bg=PANEL_DEEP, fg=accent or self.accent, width=3, pady=3, font=('Segoe UI Semibold', 10), highlightthickness=1, highlightbackground=BORDER_SOFT).pack(side='left')
+        self._label(top, title, fg=SUBTEXT, bg=top.cget('bg'), font=('Segoe UI', 9)).pack(side='left', padx=(9, 0))
+        if isinstance(variable, tk.StringVar):
+            self._label(ci, textvariable=variable, bg=ci.cget('bg'), font=('Segoe UI Semibold', 18)).pack(anchor='w', pady=(6, 0))
+        else:
+            self._label(ci, variable, bg=ci.cget('bg'), font=('Segoe UI Semibold', 18)).pack(anchor='w', pady=(6, 0))
+        if subtitle:
+            self._label(ci, subtitle, fg=MUTED, bg=ci.cget('bg'), font=('Segoe UI', 8)).pack(anchor='w', pady=(1, 0))
+        return card
+
+    def _label(self, parent: tk.Widget, text: str = '', *, fg: str = TEXT, bg: str | None = None, font=('Segoe UI', 11), wraplength: int | None = None, justify='left', textvariable=None, **kwargs) -> tk.Label:
+        label = tk.Label(parent, text=text, textvariable=textvariable, fg=fg, bg=bg or parent.cget('bg'), font=font, wraplength=wraplength, justify=justify, anchor='w', **kwargs)
+        # Most labels are inside resizable cards.  Fixed wraplengths looked good
+        # on the developer screen but clipped on laptop/projector resolutions.
+        # Keep the requested max width while shrinking automatically with the
+        # parent, so long hints and report text remain readable instead of
+        # disappearing beyond the right edge.
+        if wraplength:
+            self._auto_wrap_label(label, max_width=int(wraplength))
+        return label
+
+    def _auto_wrap_label(self, label: tk.Label, *, max_width: int, min_width: int = 180, margin: int = 28) -> None:
+        try:
+            parent = label.master
+        except Exception:
+            return
+
+        def _sync(_event=None) -> None:
+            try:
+                width = parent.winfo_width()
+                if width <= 1:
+                    return
+                label.configure(wraplength=max(min_width, min(max_width, width - margin)))
+            except Exception:
+                pass
+
+        try:
+            parent.bind('<Configure>', _sync, add='+')
+            label.after_idle(_sync)
+        except Exception:
+            pass
+
+    def _action_bar(self, parent: tk.Widget, *, align: str = 'left') -> tk.Frame:
+        """Consistent button row with a dark surface and safe wrapping space."""
+        bar = tk.Frame(parent, bg=parent.cget('bg'))
+        bar.pack(fill='x')
+        bar._cvx_align = align  # type: ignore[attr-defined]
+        return bar
+
+    def _compact_button_text(self, text: str, *, max_chars: int = 22) -> str:
+        if len(text) <= max_chars:
+            return text
+        return text[: max_chars - 1].rstrip() + '…'
 
     def _center_window(self, window: tk.Toplevel, width: int | None = None, height: int | None = None) -> None:
         """Center a dialog after geometry is set. Safe when running under tests/headless."""
@@ -277,14 +383,19 @@ class VisualMixin:
         return row
 
     def _status_pill(self, parent: tk.Widget, text: str, *, color: str | None = None) -> tk.Label:
+        # Compact chip with less visual weight than the older square badges.
+        chip_bg = color or SURFACE_2
+        chip_fg = APP_BG if color else SUBTEXT
         label = tk.Label(
             parent,
             text=text,
-            bg=color or SURFACE_3,
-            fg=APP_BG if color else TEXT,
-            padx=10,
+            bg=chip_bg,
+            fg=chip_fg,
+            padx=11,
             pady=5,
-            font=('Segoe UI Semibold', 9),
+            font=('Segoe UI Semibold', 8),
+            highlightthickness=1,
+            highlightbackground=(color or BORDER_SOFT),
         )
         return label
 
@@ -304,17 +415,40 @@ class VisualMixin:
             pass
 
     def _attach_tree_scrollbars(self, tree: ttk.Treeview) -> None:
-        """Attach a slim vertical scrollbar without forcing ugly horizontal bars.
+        """Attach a dark slim scrollbar and route wheel events correctly.
 
-        Treeview horizontal scrollbars were making dense pages look broken on wide
-        screens and caused the white bar visible at the bottom of tables.  The
-        product UI now prefers readable stretching columns and vertical scrolling.
+        The previous implementation placed a classic tk scrollbar on top of the
+        tree.  On some Windows/Tk themes it stayed bright white and made long
+        pages look broken.  ttk + clam styling is much cleaner and supports
+        normal mouse-wheel scrolling inside tables.
         """
         try:
             parent = tree.master
             vsb = ttk.Scrollbar(parent, orient='vertical', command=tree.yview, style='Vertical.TScrollbar')
-            tree.configure(yscrollcommand=vsb.set, xscrollcommand='')
+            hsb = ttk.Scrollbar(parent, orient='horizontal', command=tree.xview, style='Horizontal.TScrollbar')
+            tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
+            # Overlay slim scrollbars inside the table bounds.  This avoids the
+            # old white/native bars and keeps later button rows from being pushed
+            # out of place.  Horizontal scrolling matters for AI/Proof tables
+            # whose evidence columns are intentionally wide.
             vsb.place(in_=tree, relx=1.0, rely=0, relheight=1.0, anchor='ne')
+            hsb.place(in_=tree, relx=0, rely=1.0, relwidth=1.0, anchor='sw')
+
+            def _wheel(event, target=tree):
+                try:
+                    if getattr(event, 'num', None) == 4:
+                        target.yview_scroll(-3, 'units')
+                    elif getattr(event, 'num', None) == 5:
+                        target.yview_scroll(3, 'units')
+                    else:
+                        target.yview_scroll(int(-1 * (event.delta / 120)) * 3, 'units')
+                    return 'break'
+                except Exception:
+                    return None
+
+            tree.bind('<MouseWheel>', _wheel, add='+')
+            tree.bind('<Button-4>', _wheel, add='+')
+            tree.bind('<Button-5>', _wheel, add='+')
         except Exception:
             pass
 
@@ -408,19 +542,25 @@ class VisualMixin:
         bg = RISK_TAG_BG.get(text, PANEL_DEEP)
         return tk.Label(parent, text=text, bg=bg, fg=color, padx=10, pady=4, font=('Segoe UI Semibold', 8))
 
-    def _mini_stat_card(self, parent: tk.Widget, title: str, value_var: tk.StringVar | str, hint: str = '', *, level: str = 'info') -> tk.Frame:
-        card = self._card(parent, bg=CARD_BG, padx=14, pady=12)
+    def _mini_stat_card(self, parent: tk.Widget, title: str, value_var: tk.StringVar | str, hint: str = '', *, level: str = 'info', accent: str | None = None, subtitle: str = '', icon: str = '•') -> tk.Frame:
+        color = accent or {
+            'success': SUCCESS, 'low': SUCCESS, 'info': INFO, 'medium': WARNING,
+            'moderate': INFO, 'warning': WARNING, 'high': WARNING, 'danger': DANGER,
+            'critical': DANGER, 'planned': MUTED,
+        }.get(str(level).lower(), self.accent)
+        card = self._glow_card(parent, bg=CARD_BG, accent=color, padx=14, pady=12, height=92 if not hint and not subtitle else None)
         inner = card.inner
         top = tk.Frame(inner, bg=inner.cget('bg'))
         top.pack(fill='x')
-        self._severity_badge(top, level.title() if level in {'low', 'medium', 'high', 'critical'} else 'Status', level=level).pack(side='right')
-        self._label(top, title, fg=SUBTEXT, bg=top.cget('bg'), font=('Segoe UI', 9)).pack(side='left')
+        tk.Label(top, text=icon, bg=PANEL_DEEP, fg=color, width=3, pady=3, font=('Segoe UI Semibold', 10), highlightthickness=1, highlightbackground=BORDER_SOFT).pack(side='left')
+        self._label(top, title, fg=SUBTEXT, bg=top.cget('bg'), font=('Segoe UI', 9)).pack(side='left', padx=(8, 0))
         if isinstance(value_var, tk.StringVar):
             self._label(inner, textvariable=value_var, bg=inner.cget('bg'), font=('Segoe UI Semibold', 18)).pack(anchor='w', pady=(8, 0))
         else:
             self._label(inner, str(value_var), bg=inner.cget('bg'), font=('Segoe UI Semibold', 18)).pack(anchor='w', pady=(8, 0))
-        if hint:
-            self._label(inner, hint, fg=MUTED, bg=inner.cget('bg'), font=('Segoe UI', 8), wraplength=230).pack(anchor='w', pady=(4, 0))
+        detail = subtitle or hint
+        if detail:
+            self._label(inner, detail, fg=MUTED, bg=inner.cget('bg'), font=('Segoe UI', 8), wraplength=230).pack(anchor='w', pady=(4, 0))
         return card
 
     def _report_option_card(self, parent: tk.Widget, title: str, body: str, button_text: str, command, *, level: str = 'info') -> tk.Frame:
@@ -469,6 +609,8 @@ class VisualMixin:
         menu.add_command(label='Export Report Preview', command=self.export_report)
         menu.add_command(label='Export Backup', command=self.export_backup)
         menu.add_separator()
+        menu.add_command(label='Open Isolated Demo Vault', command=self.open_isolated_demo_vault)
+        menu.add_command(label='Exit Demo Vault', command=self.exit_demo_vault)
         menu.add_command(label='Create Assessment Workspace', command=self.load_demo_data)
         menu.add_command(label='Full-Screen Focus Mode', command=self.toggle_presentation_mode)
         btn.configure(menu=menu)
@@ -489,6 +631,58 @@ class VisualMixin:
                 highlightcolor=(page_color if active else SIDEBAR_BG),
             )
 
+    def _install_global_scroll_router(self) -> None:
+        """Make mouse wheel scrolling work from anywhere in the active page.
+
+        Tkinter only sends <MouseWheel> to the widget under the cursor; the old
+        implementation bound the wheel to the canvas and body only, so hovering
+        over cards, labels, text blocks, or tables made the page feel frozen.
+        This router fixes that while letting Treeview/Text widgets scroll first.
+        """
+        if getattr(self, '_global_scroll_router_installed', False):
+            return
+        self._global_scroll_router_installed = True
+
+        def _route(event):
+            try:
+                widget = getattr(event, 'widget', None)
+                delta = -3 if getattr(event, 'num', None) == 4 else 3 if getattr(event, 'num', None) == 5 else int(-1 * (event.delta / 120)) * 3
+                cls = widget.winfo_class() if widget else ''
+
+                if cls in {'Treeview', 'Text', 'Listbox'}:
+                    try:
+                        first, last = widget.yview()
+                        if not (first <= 0.0 and delta < 0) and not (last >= 1.0 and delta > 0):
+                            widget.yview_scroll(delta, 'units')
+                            return 'break'
+                    except Exception:
+                        pass
+
+                canvas = getattr(self, '_active_scroll_canvas', None)
+                if canvas is None or not canvas.winfo_exists():
+                    return None
+                bbox = canvas.bbox('all') or (0, 0, 0, 0)
+                if (bbox[3] - bbox[1]) <= canvas.winfo_height() + 4:
+                    return None
+                canvas.yview_scroll(delta, 'units')
+                return 'break'
+            except Exception:
+                return None
+
+        self.bind_all('<MouseWheel>', _route, add='+')
+        self.bind_all('<Button-4>', _route, add='+')
+        self.bind_all('<Button-5>', _route, add='+')
+
+    def _activate_page_scroll(self, frame: tk.Widget) -> None:
+        try:
+            canvas = getattr(frame, '_scroll_canvas', None)
+            if canvas is not None:
+                self._active_scroll_canvas = canvas
+                self._install_global_scroll_router()
+                canvas.after_idle(lambda c=canvas: c.configure(scrollregion=c.bbox('all') or (0, 0, 0, 0)))
+        except Exception:
+            pass
+
     def show_view(self, page_key: str) -> None:
         self.current_page = page_key
         title, subtitle = PAGE_META[page_key]
@@ -504,12 +698,16 @@ class VisualMixin:
                 self.page_context_badge.configure(bg=PAGE_COLORS.get(page_key, self.accent), fg=APP_BG)
             except Exception:
                 pass
+        active_frame = None
         for key, frame in self.pages.items():
             if key == page_key:
                 frame.pack(fill='both', expand=True)
+                active_frame = frame
             else:
                 frame.pack_forget()
-        compact_pages = {'generator', 'trash', 'activity', 'settings', 'system_health', 'about', 'proof', 'reports', 'backup_recovery'}
+        if active_frame is not None:
+            self._activate_page_scroll(active_frame)
+        compact_pages = {'generator', 'security', 'ai_guardian', 'trash', 'activity', 'settings', 'system_health', 'about', 'proof', 'reports', 'backup_recovery'}
         if hasattr(self, 'metrics_row'):
             if page_key in compact_pages and self.metrics_row.winfo_manager():
                 self.metrics_row.pack_forget()
@@ -535,7 +733,7 @@ class VisualMixin:
         if total == 0:
             self._configure_dashboard_card(0, title='Add your first credential', body='Start with a real account or an assessment entry so the vault can begin scoring health and posture.', button_text='Add Credential', command=self.open_quick_add, style='Accent.TButton')
             self._configure_dashboard_card(1, title='Import browser CSV', body='Bring in Chrome, Edge, or generic CSV exports and encrypt them on save.', button_text='Import CSV', command=self.import_csv)
-            self._configure_dashboard_card(2, title='Run security tour', body='Open a guided walkthrough of the vault, Security Center, AI Guardian, backups, and proof checks without exposing sample-data controls.', button_text='Quick Tour', command=self.show_quick_tour)
+            self._configure_dashboard_card(2, title='Run security tour', body='Open a guided walkthrough of the vault, Security Center, AI-style Local Security Coach, backups, and proof checks without exposing sample-data controls.', button_text='Quick Tour', command=self.show_quick_tour)
             self.dashboard_priority_var.set('No data yet. Add credentials or import a browser CSV to activate health scoring and breach intelligence.')
             return
         if breached or weak or reused or old:

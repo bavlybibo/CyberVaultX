@@ -8,7 +8,7 @@ CyberVault X supports three report formats:
 
 ## Report Contents
 
-Reports include app/vault summary, generated timestamp, encryption status, dashboard metrics, AI Guardian summary, top priority items, findings, recommendations, limitations, and payload hashes.
+Reports include app/vault summary, generated timestamp, encryption status, dashboard metrics, AI-style Local Security Coach summary, top priority items, findings, recommendations, limitations, and payload hashes.
 
 ## Redaction Rules
 
